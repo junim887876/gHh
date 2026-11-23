@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Secreta Barber | Painel do Proprietário</title>
+    <title>Secret Barber | Painel do Proprietário</title>
 
     <!-- ===================================================================== -->
-    <!-- CONFIGURAÇÃO INICIAL (PREENCHA SUA URL DO APPS SCRIPT E REPOSITÓRIO)  -->
+    <!-- CONFIGURAÇÃO INICIAL (COLE A URL DO SEU APPS SCRIPT ABAIXO)           -->
     <!-- ===================================================================== -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7wHmfBw_7MOP172wvp7eZY9DkhKkAkOZndB7L0QF2jFleY7dOEtbecMNmyxWtPioi/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNJGexd0ySgkBpzDep-MCIp1nDU0eVP-UusQwNqtDUDcOpt0WWZqYhMkv-SVaqjEZP/exec";
         const ONESIGNAL_APP_ID = "de473ebd-0f05-4d9e-8ba3-ba57e5066316";
-        // Se o site abre em https://usuario.github.io/secreta-barber/admin.html, coloque '/secreta-barber/'
-        // Se abre direto na raiz (https://usuario.github.io/admin.html), deixe '/'
+        // Se abre em https://usuario.github.io/secreta-barber/index.html, coloque '/secreta-barber/'
+        // Se abre na raiz (https://usuario.github.io/index.html), deixe '/'
         const REPO_PATH = "/";
     </script>
 
@@ -21,13 +21,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Secreta Barber">
-    <meta name="description" content="Painel de Gestão, Agenda, Contabilidade e IA de Movimento - Secreta Barber">
+    <meta name="apple-mobile-web-app-title" content="Secret Barber">
+    <meta name="description" content="Painel de Gestão, Agenda, Cortes, Caixa e IA - Secret Barber">
 
-    <!-- Manifest & Ícones Reais (Apontando direto para logo.jpg) -->
-    <link rel="manifest" href="manifest.json?v=3">
-    <link rel="icon" type="image/jpeg" href="logo.jpg?v=3">
-    <link rel="apple-touch-icon" href="logo.jpg?v=3">
+    <!-- Manifest & Ícones Reais -->
+    <link rel="manifest" href="manifest.json?v=4">
+    <link rel="icon" type="image/jpeg" href="logo.jpg?v=4">
+    <link rel="apple-touch-icon" href="logo.jpg?v=4">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,7 +37,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Tone.js para alerta sonoro nativo -->
+    <!-- Tone.js para alerta sonoro -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <!-- OneSignal Web Push SDK v16 -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -102,7 +102,44 @@
 </head>
 <body class="min-h-screen w-full flex flex-col selection:bg-amber-500 selection:text-black">
 
-    <!-- BANNER DE NOTIFICAÇÃO PUSH INTERNA (TOPO) -->
+    <!-- ===================================================================== -->
+    <!-- TELA DE BLOQUEIO DE LICENCIAMENTO (OCULTA TODOS OS DADOS QUANDO TRAVA) -->
+    <!-- ===================================================================== -->
+    <div id="license-lock-screen" class="fixed inset-0 z-[100] bg-obsidian-950 hidden flex-col items-center justify-center p-5 text-center">
+        <div class="w-full max-w-md bg-obsidian-900 border border-red-500/50 rounded-3xl p-6 space-y-5 shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-400 flex items-center justify-center mx-auto">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <div class="space-y-2">
+                <span class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-[11px] font-extrabold uppercase tracking-wider">
+                    Acesso Suspenso
+                </span>
+                <h2 class="text-xl font-extrabold text-white pt-1">Secret Barber Bloqueado</h2>
+                <p id="lock-screen-message" class="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                    Sistema suspenso por falta de pagamento do licenciamento. Regularize sua mensalidade para liberar o acesso.
+                </p>
+            </div>
+
+            <div class="bg-obsidian-950 border border-zinc-800 rounded-2xl p-3.5 text-[11px] text-zinc-400">
+                Os dados da agenda, clientes e financeiro estão protegidos e ocultos até a reativação da licença.
+            </div>
+
+            <div class="flex flex-col gap-2.5 pt-1">
+                <a id="lock-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer"
+                   class="hidden w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    <span>Regularizar via WhatsApp</span>
+                </a>
+                <button type="button" onclick="syncAllFromGoogleSheets(true)"
+                    class="w-full py-3 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span>Verificar Liberação</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BANNER DE NOTIFICAÇÃO INTERNA (TOPO) -->
     <div id="owner-toast-banner" class="fixed top-3 left-0 right-0 mx-auto z-50 w-[92%] max-w-md transform -translate-y-44 opacity-0 transition-all duration-500 pointer-events-none">
         <div class="bg-obsidian-800/95 backdrop-blur-md border border-amber-500/70 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 pointer-events-auto">
             <div class="relative w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 animate-ring">
@@ -110,7 +147,7 @@
             </div>
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">Secreta Barber • Proprietário</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">Secret Barber • Proprietário</span>
                     <span class="text-[10px] text-zinc-400 shrink-0">Agora</span>
                 </div>
                 <p id="toast-title" class="text-xs sm:text-sm font-bold text-white mt-0.5 break-words">Alerta do Sistema</p>
@@ -123,20 +160,20 @@
     </div>
 
     <!-- CABEÇALHO SUPERIOR FIXO -->
-    <header class="sticky top-0 z-40 w-full bg-obsidian-950/95 backdrop-blur-md border-b border-zinc-800/80">
+    <header id="app-header" class="sticky top-0 z-40 w-full bg-obsidian-950/95 backdrop-blur-md border-b border-zinc-800/80">
         <div class="w-full max-w-xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
-            <!-- Identidade Proprietário com logo.jpg -->
+            <!-- Identidade Secret Barber -->
             <div class="flex items-center gap-2.5 min-w-0">
-                <img src="logo.jpg?v=3" alt="Secreta Barber"
+                <img src="logo.jpg?v=4" alt="Secret Barber"
                      onerror="this.style.display='none'; document.getElementById('logo-fallback-icon').classList.remove('hidden');"
                      class="w-9 h-9 rounded-xl object-cover border border-amber-500/40 shadow shrink-0">
                 <div id="logo-fallback-icon" class="hidden w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black font-extrabold shadow shrink-0">
-                    <i data-lucide="crown" class="w-4 h-4"></i>
+                    <i data-lucide="scissors" class="w-4 h-4"></i>
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
                         <h1 class="text-sm font-extrabold tracking-tight text-white leading-tight truncate">
-                            SECRETA <span class="text-amber-400">ADMIN</span>
+                            SECRET <span class="text-amber-400">BARBER</span>
                         </h1>
                         <span id="sheet-sync-badge" class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-extrabold text-amber-400 uppercase shrink-0">Sync</span>
                     </div>
@@ -147,7 +184,7 @@
                 </div>
             </div>
 
-            <!-- Ações Rápidas (Ativar Push + Instalar na Tela Inicial + Sincronizar) -->
+            <!-- Ações Rápidas -->
             <div class="flex items-center gap-1.5 shrink-0">
                 <button type="button" id="btn-enable-push" onclick="requestOneSignalPermission()" class="p-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1" title="Ativar notificações push">
                     <i data-lucide="bell-ring" class="w-4 h-4"></i>
@@ -172,21 +209,21 @@
     </div>
 
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="flex-1 w-full max-w-xl mx-auto px-3 py-4 space-y-4">
+    <main id="app-main-content" class="flex-1 w-full max-w-xl mx-auto px-3 py-4 space-y-4">
 
         <!-- ========================================================= -->
-        <!-- ABA 1: AGENDA & CLIENTES (ACEITAR / CONCLUIR / REJEITAR)  -->
+        <!-- ABA 1: AGENDA POR DIA (HOJE, AMANHÃ, PRÓXIMOS DIAS)       -->
         <!-- ========================================================= -->
         <section id="tab-agenda" class="space-y-3.5 w-full">
 
-            <!-- Cards Resumo Rápido do Dia -->
+            <!-- Cards Resumo Rápido do Dia Selecionado -->
             <div class="grid grid-cols-3 gap-2">
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
-                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Hoje</span>
+                    <span id="stat-day-label" class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Marcados Hoje</span>
                     <span id="stat-today-count" class="text-lg font-extrabold text-white mt-0.5 block">0</span>
                 </div>
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
-                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Previsto</span>
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Previsto Dia</span>
                     <span id="stat-today-revenue" class="text-sm sm:text-lg font-extrabold text-emerald-400 mt-0.5 block truncate">R$ 0</span>
                 </div>
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
@@ -195,32 +232,38 @@
                 </div>
             </div>
 
-            <!-- Filtro de Data e Status -->
+            <!-- Navegador de Dias (Hoje, Dia Seguinte, Anterior, Calendário) -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3.5 space-y-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
-                        <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                        <span>Clientes Agendados</span>
-                    </h2>
-                    <div class="flex items-center gap-1.5">
-                        <input type="date" id="agenda-date-filter" onchange="renderOwnerBookings()"
-                            class="px-2.5 py-1.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
-                        <button type="button" onclick="clearDateFilter()" class="px-2.5 py-1.5 rounded-xl bg-obsidian-800 text-[11px] font-semibold text-zinc-300 hover:text-white">
-                            Todos
-                        </button>
+                <div class="flex items-center justify-between gap-2">
+                    <button type="button" onclick="changeSelectedDay(-1)" class="px-3 py-2 rounded-xl bg-obsidian-950 hover:bg-obsidian-800 border border-zinc-800 text-xs font-bold text-zinc-200 flex items-center gap-1 transition">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Anterior</span>
+                    </button>
+
+                    <div class="text-center min-w-0 flex-1">
+                        <span id="selected-day-title" class="block text-sm font-extrabold text-amber-400 truncate">Hoje</span>
+                        <span id="selected-day-subtitle" class="block text-[11px] text-zinc-400 truncate">--/--/----</span>
                     </div>
+
+                    <button type="button" onclick="changeSelectedDay(1)" class="px-3 py-2 rounded-xl bg-obsidian-950 hover:bg-obsidian-800 border border-zinc-800 text-xs font-bold text-zinc-200 flex items-center gap-1 transition">
+                        <span>Próximo</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
-                <!-- Filtros de Status -->
-                <div class="flex gap-1.5 overflow-x-auto pb-1">
-                    <button type="button" onclick="setBookingStatusFilter('all')" id="filter-status-all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0">Todos</button>
-                    <button type="button" onclick="setBookingStatusFilter('confirmed')" id="filter-status-confirmed" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Ativos</button>
-                    <button type="button" onclick="setBookingStatusFilter('completed')" id="filter-status-completed" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Concluídos</button>
-                    <button type="button" onclick="setBookingStatusFilter('rejected')" id="filter-status-rejected" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Rejeitados</button>
+                <!-- Atalhos Rápidos de Dia + Calendário -->
+                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-zinc-800/80">
+                    <div class="flex gap-1.5 overflow-x-auto">
+                        <button type="button" onclick="jumpToDayOffset(0)" id="btn-quick-today" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 text-black shrink-0">Hoje</button>
+                        <button type="button" onclick="jumpToDayOffset(1)" id="btn-quick-tomorrow" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-obsidian-950 text-zinc-300 border border-zinc-800 shrink-0">Amanhã</button>
+                        <button type="button" onclick="jumpToDayOffset(2)" id="btn-quick-after" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-obsidian-950 text-zinc-300 border border-zinc-800 shrink-0">Depois</button>
+                    </div>
+                    <input type="date" id="agenda-date-picker" onchange="onDatePickerChange(this.value)"
+                        class="px-2 py-1 rounded-lg bg-obsidian-950 border border-zinc-800 text-[11px] text-white focus:outline-none focus:border-amber-500 shrink-0">
                 </div>
             </div>
 
-            <!-- Lista de Agendamentos -->
+            <!-- Lista de Agendamentos daquele Dia (Rejeitados somem automaticamente) -->
             <div id="owner-bookings-container" class="space-y-3"></div>
         </section>
 
@@ -229,23 +272,20 @@
         <!-- ========================================================= -->
         <section id="tab-horarios" class="hidden space-y-4 w-full">
 
-            <!-- Configuração de Expediente -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-4">
                 <div class="border-b border-zinc-800 pb-3">
                     <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                         <i data-lucide="clock" class="w-4 h-4 text-amber-400 shrink-0"></i>
                         <span>Expediente & Grade Automática</span>
                     </h2>
-                    <p class="text-xs text-zinc-400 mt-0.5">Ao salvar, sua Planilha Google e o site dos clientes atualizam na hora.</p>
+                    <p class="text-xs text-zinc-400 mt-0.5">Ao salvar, sua Planilha Google e o link dos clientes atualizam na hora.</p>
                 </div>
 
-                <!-- Dias da Semana que Trabalha -->
                 <div class="space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400">Dias de Atendimento</label>
                     <div id="work-days-grid" class="grid grid-cols-7 gap-1"></div>
                 </div>
 
-                <!-- Início, Fim e Intervalo -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs text-zinc-300 mb-1">Início do Expediente</label>
@@ -267,7 +307,6 @@
                     </div>
                 </div>
 
-                <!-- Horário de Almoço / Pausa -->
                 <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
@@ -313,12 +352,12 @@
                 </form>
             </div>
 
-            <!-- Seleção Fina: Bloquear ou Liberar Horários Individuais -->
+            <!-- Seleção Fina -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <h3 class="text-sm font-bold text-white">Bloquear ou Liberar Horários</h3>
-                        <p class="text-[11px] text-zinc-400">Toque em um horário para fechar ou reabrir para clientes.</p>
+                        <p class="text-[11px] text-zinc-400">Toque em um horário para fechar ou reabrir.</p>
                     </div>
                     <span id="active-slots-badge" class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold shrink-0">0 abertos</span>
                 </div>
@@ -328,13 +367,66 @@
         </section>
 
         <!-- ========================================================= -->
-        <!-- ABA 3: CONTABILIDADE, FATURAMENTO MENSAL & LUCRO          -->
+        <!-- ABA 3: CORTES & PREÇOS (SALVA DIRETO NA PLANILHA GOOGLE)   -->
+        <!-- ========================================================= -->
+        <section id="tab-servicos" class="hidden space-y-4 w-full">
+
+            <!-- Adicionar Novo Corte / Serviço -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <div class="border-b border-zinc-800 pb-2.5">
+                    <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="scissors" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                        <span>Adicionar Novo Corte ou Serviço</span>
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Vai direto para a aba <strong>Servicos</strong> da Planilha Google.</p>
+                </div>
+
+                <form onsubmit="handleAddNewService(event)" class="space-y-2.5">
+                    <div>
+                        <label class="block text-xs text-zinc-300 mb-1">Nome do Corte / Serviço</label>
+                        <input type="text" id="new-srv-name" required placeholder="Ex: Corte Navalhado + Sobrancelha"
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-xs text-zinc-300 mb-1">Preço (R$)</label>
+                            <input type="number" id="new-srv-price" step="0.01" min="1" required placeholder="40.00"
+                                class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-300 mb-1">Duração Estimada</label>
+                            <select id="new-srv-duration" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-amber-500">
+                                <option value="15 min">15 min</option>
+                                <option value="30 min">30 min</option>
+                                <option value="45 min" selected>45 min</option>
+                                <option value="60 min">60 min</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-wider transition">
+                        Adicionar Corte na Planilha
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Cortes Existentes para Editar Preço -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-white">Tabela de Cortes & Preços</h3>
+                    <span id="services-count-badge" class="text-[11px] text-zinc-400">0 serviços</span>
+                </div>
+                <div id="owner-services-list" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 4: CONTABILIDADE, FATURAMENTO MENSAL & LUCRO          -->
         <!-- ========================================================= -->
         <section id="tab-contabilidade" class="hidden space-y-4 w-full">
 
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Financeiro Secreta Barber</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Financeiro Secret Barber</span>
                     <h2 class="text-base font-bold text-white">Contabilidade Mensal</h2>
                 </div>
                 <input type="month" id="finance-month-picker" onchange="renderFinanceDashboard()"
@@ -408,59 +500,48 @@
         </section>
 
         <!-- ========================================================= -->
-        <!-- ABA 4: IA LOCAL DE MOVIMENTO (ANÁLISE ESTATÍSTICA LOCAL)  -->
+        <!-- ABA 5: IA SIMPLES DO BARBEIRO (DICAS BÁSICAS DO DIA)      -->
         <!-- ========================================================= -->
         <section id="tab-ia" class="hidden space-y-4 w-full">
-            <div class="bg-gradient-to-r from-obsidian-900 via-obsidian-800 to-obsidian-900 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-2">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
-                        <i data-lucide="cpu" class="w-3 h-3"></i>
-                        IA Local • Radar de Movimento
+                    <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="bot" class="w-3 h-3"></i>
+                        Assistente Simples
                     </span>
-                    <button type="button" onclick="runLocalMovementAI()" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition">
+                    <button type="button" onclick="runSimpleBarberAI()" class="px-3 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-zinc-200 text-xs font-bold flex items-center gap-1 transition">
                         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                        <span>Recalcular</span>
+                        <span>Atualizar</span>
                     </button>
                 </div>
-                <h2 class="text-base font-bold text-white">Previsão & Ocupação da Barbearia</h2>
-                <p class="text-xs text-zinc-400">Analisa horários marcados, horários de pico e vagas livres automaticamente.</p>
+                <h2 class="text-base font-bold text-white">Resumo Básico do Movimento</h2>
+                <p class="text-xs text-zinc-400">Faz uma leitura simples de quantos clientes têm hoje e dá dicas básicas para a barbearia.</p>
             </div>
 
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-zinc-400">Ocupação Hoje</span>
-                    <span id="ai-occupancy-badge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-zinc-800 text-zinc-300">Calculando...</span>
+                    <span class="text-xs font-bold uppercase text-zinc-400">Como está o dia hoje</span>
+                    <span id="ai-occupancy-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-800 text-zinc-300">Vendo...</span>
                 </div>
-                <div class="w-full h-3 bg-obsidian-950 rounded-full overflow-hidden border border-zinc-800">
+                <div class="w-full h-2.5 bg-obsidian-950 rounded-full overflow-hidden border border-zinc-800">
                     <div id="ai-occupancy-bar" class="h-full bg-amber-500 transition-all duration-500" style="width: 0%"></div>
                 </div>
-                <p id="ai-occupancy-summary" class="text-xs text-zinc-300 leading-relaxed">Analisando agenda...</p>
-            </div>
-
-            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                        <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
-                        <span>Mapa de Demanda por Horário</span>
-                    </h3>
-                    <span class="text-[11px] text-zinc-400">Base histórica</span>
-                </div>
-                <div id="ai-hourly-heatmap" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+                <p id="ai-occupancy-summary" class="text-xs text-zinc-300 leading-relaxed">Contando clientes...</p>
             </div>
 
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
-                    <span>Recomendações Inteligentes</span>
+                    <span>Dicas Simples para Hoje</span>
                 </h3>
                 <div id="ai-recommendations-list" class="space-y-2.5"></div>
             </div>
         </section>
     </main>
 
-    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90 pb-[env(safe-area-inset-bottom)]">
-        <div class="max-w-xl mx-auto grid grid-cols-4 px-1 py-1.5">
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (5 ABAS) -->
+    <nav id="app-bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90 pb-[env(safe-area-inset-bottom)]">
+        <div class="max-w-xl mx-auto grid grid-cols-5 px-1 py-1.5">
             <button type="button" onclick="switchOwnerTab('agenda')" id="nav-agenda" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-amber-400 font-bold transition">
                 <div class="relative">
                     <i data-lucide="calendar-check" class="w-5 h-5"></i>
@@ -474,41 +555,46 @@
                 <span class="text-[10px] mt-1">Horários</span>
             </button>
 
+            <button type="button" onclick="switchOwnerTab('servicos')" id="nav-servicos" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="scissors" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1">Cortes</span>
+            </button>
+
             <button type="button" onclick="switchOwnerTab('contabilidade')" id="nav-contabilidade" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
                 <i data-lucide="dollar-sign" class="w-5 h-5"></i>
                 <span class="text-[10px] mt-1">Caixa</span>
             </button>
 
             <button type="button" onclick="switchOwnerTab('ia')" id="nav-ia" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
-                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
-                <span class="text-[10px] mt-1">IA Local</span>
+                <i data-lucide="bot" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1">IA</span>
             </button>
         </div>
     </nav>
 
-    <!-- MODAL DE INSTALAÇÃO NA TELA INICIAL (ANDROID E IPHONE/IOS) -->
+    <!-- MODAL DE INSTALAÇÃO NA TELA INICIAL -->
     <div id="pwa-install-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-3">
         <div class="bg-obsidian-900 border border-amber-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                     <i data-lucide="smartphone" class="w-5 h-5 text-amber-400"></i>
-                    <span>Instalar App no Celular</span>
+                    <span>Instalar Secret Barber</span>
                 </h3>
                 <button type="button" onclick="closePwaModal()" class="text-zinc-400 hover:text-white p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
             <p class="text-xs text-zinc-300 leading-relaxed">
-                Adicione o <strong>Secreta Barber</strong> à tela inicial do seu telefone para abrir em tela cheia com a sua logo:
+                Adicione o <strong>Secret Barber</strong> à tela inicial do seu celular para abrir como aplicativo nativo:
             </p>
             <div class="space-y-2.5 text-xs">
                 <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3">
                     <p class="font-bold text-amber-400 mb-1">No Android (Chrome):</p>
-                    <p class="text-zinc-300">Toque nos <strong>3 pontinhos (⋮)</strong> no canto superior direito do navegador e selecione <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar aplicativo"</strong>.</p>
+                    <p class="text-zinc-300">Toque nos <strong>3 pontinhos (⋮)</strong> no canto superior direito e selecione <strong>"Adicionar à tela inicial"</strong>.</p>
                 </div>
                 <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3">
                     <p class="font-bold text-sky-400 mb-1">No iPhone (Safari):</p>
-                    <p class="text-zinc-300">Toque no ícone de <strong>Compartilhar (quadrado com seta para cima)</strong> na barra inferior e escolha <strong>"Adicionar à Tela de Início"</strong>.</p>
+                    <p class="text-zinc-300">Toque em <strong>Compartilhar (quadrado com seta para cima)</strong> e escolha <strong>"Adicionar à Tela de Início"</strong>.</p>
                 </div>
             </div>
             <button type="button" onclick="closePwaModal()" class="w-full py-3 rounded-xl bg-amber-500 text-black font-bold text-xs uppercase">
@@ -517,13 +603,13 @@
         </div>
     </div>
 
-    <!-- MODAL DE REJEIÇÃO DE HORÁRIO -->
+    <!-- MODAL DE REJEIÇÃO DE HORÁRIO (REMOVE DA TELA DO PROPRIETÁRIO) -->
     <div id="reject-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-3">
         <div class="bg-obsidian-900 border border-red-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                     <i data-lucide="x-circle" class="w-5 h-5 text-red-400"></i>
-                    <span>Rejeitar Horário</span>
+                    <span>Rejeitar Pedido</span>
                 </h3>
                 <button type="button" onclick="closeRejectModal()" class="text-zinc-400 hover:text-white p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -533,7 +619,7 @@
                 Cliente...
             </p>
             <div>
-                <label class="block text-xs text-zinc-400 mb-1">Motivo da rejeição</label>
+                <label class="block text-xs text-zinc-400 mb-1">Motivo da rejeição (o horário será liberado e sairá da sua tela)</label>
                 <select id="reject-reason-select" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white mb-2">
                     <option value="Imprevisto pessoal neste horário">Imprevisto pessoal neste horário</option>
                     <option value="Expediente encerrado mais cedo hoje">Expediente encerrado mais cedo hoje</option>
@@ -549,17 +635,18 @@
                     <span>Rejeitar & Avisar no WhatsApp</span>
                 </button>
                 <button type="button" onclick="confirmRejectBooking(false)" class="w-full py-2.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-zinc-200 font-semibold text-xs transition">
-                    Apenas Rejeitar e Liberar Horário
+                    Apenas Rejeitar e Tirar da Tela
                 </button>
             </div>
         </div>
     </div>
 
     <!-- ========================================================= -->
-    <!-- LÓGICA COMPLETA: PLANILHA GOOGLE, HORÁRIOS, CAIXA, IA, PWA-->
+    <!-- LÓGICA COMPLETA DO SISTEMA                                -->
     <!-- ========================================================= -->
     <script>
         const DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const FULL_DAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
         const DEFAULT_SCHEDULE_CONFIG = {
             workDays: [false, true, true, true, true, true, true],
@@ -576,10 +663,14 @@
         let bookings = [];
         let scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG };
         let manualTransactions = [];
+        let servicesList = [];
         let knownBookingIds = new Set();
         let isFirstSync = true;
+        let isSystemLocked = false;
 
-        let currentStatusFilter = 'all';
+        // Controle da Agenda por Dia (começa em Hoje)
+        let selectedAgendaDateIso = getLocalDateIso(new Date());
+
         let rejectingBookingId = null;
         let deferredInstallPrompt = null;
         let unseenNewBookings = 0;
@@ -596,8 +687,31 @@
             return `${year}-${month}-${day}`;
         }
 
+        function addDaysToIso(isoStr, daysToAdd) {
+            const [y, m, d] = isoStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            dt.setDate(dt.getDate() + daysToAdd);
+            return getLocalDateIso(dt);
+        }
+
+        function formatIsoToFriendlyTitle(isoStr) {
+            const todayIso = getLocalDateIso(new Date());
+            const tomorrowIso = addDaysToIso(todayIso, 1);
+            const yesterdayIso = addDaysToIso(todayIso, -1);
+
+            const [y, m, d] = isoStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            const weekName = FULL_DAYS_PT[dt.getDay()];
+            const dateBR = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+
+            if (isoStr === todayIso) return { title: 'Hoje', sub: `${weekName} • ${dateBR}` };
+            if (isoStr === tomorrowIso) return { title: 'Amanhã', sub: `${weekName} • ${dateBR}` };
+            if (isoStr === yesterdayIso) return { title: 'Ontem', sub: `${weekName} • ${dateBR}` };
+            return { title: weekName, sub: dateBR };
+        }
+
         // ==========================================
-        // 1. INICIALIZAÇÃO DO APP E PWA
+        // 1. INICIALIZAÇÃO
         // ==========================================
         document.addEventListener('DOMContentLoaded', async () => {
             setupPwaInstallListener();
@@ -606,11 +720,13 @@
             const now = new Date();
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('finance-month-picker').value = currentMonth;
+            document.getElementById('agenda-date-picker').value = selectedAgendaDateIso;
 
             applyScheduleConfigToUI();
             renderOwnerBookings();
+            renderServicesList();
             renderFinanceDashboard();
-            runLocalMovementAI();
+            runSimpleBarberAI();
 
             if (!isScriptConfigured()) {
                 document.getElementById('missing-url-warning').classList.remove('hidden');
@@ -636,8 +752,49 @@
         }
 
         // ==========================================
-        // 2. SINCRONIZAÇÃO COM GOOGLE SHEETS
+        // 2. BLOQUEIO DE LICENCIAMENTO & SYNC GOOGLE SHEETS
         // ==========================================
+        function activateLicenseLockScreen(lockMessage, supportWhatsApp) {
+            isSystemLocked = true;
+            // Limpa todos os dados da memória para nada ficar acessível
+            bookings = [];
+            manualTransactions = [];
+            servicesList = [];
+
+            document.getElementById('app-header').classList.add('hidden');
+            document.getElementById('app-main-content').classList.add('hidden');
+            document.getElementById('app-bottom-nav').classList.add('hidden');
+            document.getElementById('missing-url-warning').classList.add('hidden');
+
+            const lockScreen = document.getElementById('license-lock-screen');
+            document.getElementById('lock-screen-message').textContent = lockMessage || 'Sistema suspenso por falta de pagamento do licenciamento.';
+
+            const waBtn = document.getElementById('lock-whatsapp-btn');
+            if (supportWhatsApp) {
+                const msg = encodeURIComponent('Olá! Gostaria de regularizar o pagamento da licença do sistema Secret Barber.');
+                waBtn.href = `https://wa.me/${supportWhatsApp}?text=${msg}`;
+                waBtn.classList.remove('hidden');
+            } else {
+                waBtn.classList.add('hidden');
+            }
+
+            lockScreen.classList.remove('hidden');
+            lockScreen.classList.add('flex');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function releaseLicenseLockScreen() {
+            if (!isSystemLocked) return;
+            isSystemLocked = false;
+            const lockScreen = document.getElementById('license-lock-screen');
+            lockScreen.classList.add('hidden');
+            lockScreen.classList.remove('flex');
+
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('app-main-content').classList.remove('hidden');
+            document.getElementById('app-bottom-nav').classList.remove('hidden');
+        }
+
         function setSyncBadge(state, text) {
             const badge = document.getElementById('sheet-sync-badge');
             badge.textContent = text;
@@ -658,7 +815,15 @@
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
                 const data = await response.json();
 
+                // Verifica se o dono do software bloqueou o sistema na planilha
+                if (data.status === 'locked') {
+                    activateLicenseLockScreen(data.lockMessage, data.supportWhatsApp);
+                    return;
+                }
+
                 if (data.status === 'ok') {
+                    releaseLicenseLockScreen();
+
                     const incomingBookings = Array.isArray(data.bookings) ? data.bookings : [];
 
                     if (!isFirstSync) {
@@ -682,13 +847,18 @@
                         manualTransactions = data.transactions;
                     }
 
+                    if (Array.isArray(data.services)) {
+                        servicesList = data.services;
+                        renderServicesList();
+                    }
+
                     renderOwnerBookings();
                     renderFinanceDashboard();
-                    runLocalMovementAI();
+                    runSimpleBarberAI();
                     setSyncBadge('ok', 'Online');
 
                     if (manualNotify) {
-                        showToastBanner('Planilha Sincronizada', 'Agenda, horários e caixa atualizados.');
+                        showToastBanner('Planilha Sincronizada', 'Dados atualizados com sucesso.');
                     }
                 } else {
                     setSyncBadge('error', 'Erro');
@@ -712,6 +882,10 @@
                     body: JSON.stringify(payload)
                 });
                 const res = await response.json();
+                if (res.status === 'locked') {
+                    activateLicenseLockScreen(res.lockMessage, res.supportWhatsApp);
+                    return res;
+                }
                 setSyncBadge(res.status === 'ok' ? 'ok' : 'error', res.status === 'ok' ? 'Online' : 'Erro');
                 return res;
             } catch (err) {
@@ -721,7 +895,7 @@
         }
 
         // ==========================================
-        // 3. PWA: INSTALAÇÃO NA TELA INICIAL (USA manifest.json REAL)
+        // 3. PWA & ONESIGNAL PUSH
         // ==========================================
         function setupPwaInstallListener() {
             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
@@ -756,9 +930,6 @@
             modal.classList.remove('flex');
         }
 
-        // ==========================================
-        // 4. INTEGRAÇÃO ONESIGNAL PUSH NOTIFICATIONS (USA sw.js)
-        // ==========================================
         function initOneSignalSDK() {
             const statusDot = document.getElementById('onesignal-header-dot');
             const statusText = document.getElementById('onesignal-header-status');
@@ -796,7 +967,7 @@
                 try {
                     await OneSignal.Notifications.requestPermission();
                     initOneSignalSDK();
-                    showToastBanner('Notificações Ativadas!', 'Você receberá alertas no celular quando um cliente agendar.');
+                    showToastBanner('Notificações Ativadas!', 'Você receberá alertas quando um cliente agendar.');
                 } catch (e) {
                     if ('Notification' in window) {
                         await Notification.requestPermission();
@@ -806,10 +977,10 @@
         }
 
         // ==========================================
-        // 5. NAVEGAÇÃO ENTRE ABAS DO PROPRIETÁRIO
+        // 4. NAVEGAÇÃO ENTRE ABAS (5 ABAS)
         // ==========================================
         function switchOwnerTab(tabName) {
-            const tabs = ['agenda', 'horarios', 'contabilidade', 'ia'];
+            const tabs = ['agenda', 'horarios', 'servicos', 'contabilidade', 'ia'];
             tabs.forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -823,10 +994,12 @@
                 unseenNewBookings = 0;
                 updateAgendaNavBadge();
                 renderOwnerBookings();
+            } else if (tabName === 'servicos') {
+                renderServicesList();
             } else if (tabName === 'contabilidade') {
                 renderFinanceDashboard();
             } else if (tabName === 'ia') {
-                runLocalMovementAI();
+                runSimpleBarberAI();
             }
             if (window.lucide) lucide.createIcons();
         }
@@ -842,21 +1015,24 @@
         }
 
         // ==========================================
-        // 6. AGENDA DO PROPRIETÁRIO & REJEIÇÃO
+        // 5. AGENDA POR DIA (HOJE, AMANHÃ, PRÓXIMOS) + REJEIÇÃO QUE SOME
         // ==========================================
-        function setBookingStatusFilter(status) {
-            currentStatusFilter = status;
-            ['all', 'confirmed', 'completed', 'rejected'].forEach(st => {
-                const btn = document.getElementById(`filter-status-${st}`);
-                btn.className = (st === status)
-                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0'
-                    : 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0';
-            });
+        function changeSelectedDay(deltaDays) {
+            selectedAgendaDateIso = addDaysToIso(selectedAgendaDateIso, deltaDays);
+            document.getElementById('agenda-date-picker').value = selectedAgendaDateIso;
             renderOwnerBookings();
         }
 
-        function clearDateFilter() {
-            document.getElementById('agenda-date-filter').value = '';
+        function jumpToDayOffset(offsetFromToday) {
+            const todayIso = getLocalDateIso(new Date());
+            selectedAgendaDateIso = addDaysToIso(todayIso, offsetFromToday);
+            document.getElementById('agenda-date-picker').value = selectedAgendaDateIso;
+            renderOwnerBookings();
+        }
+
+        function onDatePickerChange(newIso) {
+            if (!newIso) return;
+            selectedAgendaDateIso = newIso;
             renderOwnerBookings();
         }
 
@@ -874,53 +1050,68 @@
 
         function renderOwnerBookings() {
             const container = document.getElementById('owner-bookings-container');
-            const dateFilter = document.getElementById('agenda-date-filter').value;
             const todayIso = getLocalDateIso(new Date());
+            const tomorrowIso = addDaysToIso(todayIso, 1);
+            const afterIso = addDaysToIso(todayIso, 2);
 
-            const todayActive = bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected');
-            const todayRevenue = todayActive.reduce((acc, b) => acc + parseBrazilianPrice(b.servicePrice), 0);
-            document.getElementById('stat-today-count').textContent = todayActive.length;
-            document.getElementById('stat-today-revenue').textContent = formatBRL(todayRevenue);
-            document.getElementById('stat-closing-time').textContent = scheduleConfig.closeTime;
+            // Atualiza título amigável do dia selecionado
+            const friendly = formatIsoToFriendlyTitle(selectedAgendaDateIso);
+            document.getElementById('selected-day-title').textContent = friendly.title;
+            document.getElementById('selected-day-subtitle').textContent = friendly.sub;
+            document.getElementById('stat-day-label').textContent = `Marcados (${friendly.title})`;
 
-            const filtered = bookings.filter(b => {
-                const matchDate = !dateFilter || b.dateIso === dateFilter;
-                const matchStatus = currentStatusFilter === 'all' || b.status === currentStatusFilter;
-                return matchDate && matchStatus;
+            // Destaca atalho rápido ativo (Hoje / Amanhã / Depois)
+            const mapQuick = [
+                { id: 'btn-quick-today', iso: todayIso },
+                { id: 'btn-quick-tomorrow', iso: tomorrowIso },
+                { id: 'btn-quick-after', iso: afterIso }
+            ];
+            mapQuick.forEach(item => {
+                const btn = document.getElementById(item.id);
+                if (btn) {
+                    btn.className = (selectedAgendaDateIso === item.iso)
+                        ? 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 text-black shrink-0'
+                        : 'px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-obsidian-950 text-zinc-300 border border-zinc-800 shrink-0';
+                }
             });
 
-            if (filtered.length === 0) {
+            // Filtra SOMENTE agendamentos ativos/concluídos do dia selecionado (rejeitados somem da tela!)
+            const dayBookings = bookings
+                .filter(b => b.dateIso === selectedAgendaDateIso && b.status !== 'rejected')
+                .sort((a, b) => a.time.localeCompare(b.time));
+
+            const dayRevenue = dayBookings.reduce((acc, b) => acc + parseBrazilianPrice(b.servicePrice), 0);
+            document.getElementById('stat-today-count').textContent = dayBookings.length;
+            document.getElementById('stat-today-revenue').textContent = formatBRL(dayRevenue);
+            document.getElementById('stat-closing-time').textContent = scheduleConfig.closeTime;
+
+            if (dayBookings.length === 0) {
                 container.innerHTML = `
                     <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-6 text-center space-y-2">
-                        <i data-lucide="calendar-off" class="w-8 h-8 text-zinc-600 mx-auto"></i>
-                        <p class="text-sm font-semibold text-zinc-300">Nenhum horário encontrado</p>
-                        <p class="text-xs text-zinc-500">Os agendamentos da Planilha Google aparecem aqui.</p>
+                        <i data-lucide="calendar-check" class="w-8 h-8 text-zinc-600 mx-auto"></i>
+                        <p class="text-sm font-semibold text-zinc-300">Nenhum cliente marcado para ${friendly.title}</p>
+                        <p class="text-xs text-zinc-500">Toque em "Próximo" acima para ver os agendamentos do dia seguinte.</p>
                     </div>
                 `;
                 if (window.lucide) lucide.createIcons();
                 return;
             }
 
-            container.innerHTML = filtered.map(b => {
-                const isRejected = b.status === 'rejected';
+            container.innerHTML = dayBookings.map(b => {
                 const isCompleted = b.status === 'completed';
-
-                let badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">Confirmado</span>`;
-                if (isCompleted) {
-                    badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Concluído • Pago</span>`;
-                } else if (isRejected) {
-                    badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">Rejeitado</span>`;
-                }
+                const badgeHtml = isCompleted
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Concluído • Pago</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">Confirmado</span>`;
 
                 const cleanPhone = String(b.clientPhone || '').replace(/\D/g, '');
                 const waClientNumber = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
 
                 return `
-                    <div class="bg-obsidian-900 border ${isRejected ? 'border-red-500/30 opacity-75' : isCompleted ? 'border-emerald-500/30' : 'border-zinc-800'} rounded-2xl p-4 space-y-3">
+                    <div class="bg-obsidian-900 border ${isCompleted ? 'border-emerald-500/30' : 'border-zinc-800'} rounded-2xl p-4 space-y-3">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
-                                <span class="px-2.5 py-1 rounded-lg ${isRejected ? 'bg-zinc-800 text-zinc-400 line-through' : 'bg-amber-500 text-black'} text-xs font-extrabold">${b.time}</span>
-                                <span class="text-xs font-semibold text-zinc-300">${b.dateDisplay}</span>
+                                <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-black text-xs font-extrabold">${b.time}</span>
+                                <span class="text-xs font-semibold text-zinc-300">${friendly.title}</span>
                             </div>
                             ${badgeHtml}
                         </div>
@@ -933,7 +1124,6 @@
                             <p class="text-xs text-zinc-300 break-words">${b.serviceName} • <span class="text-amber-400">Ref: ${b.cutStyle}</span></p>
                             <p class="text-[11px] text-zinc-400">WhatsApp: ${b.clientPhone}</p>
                             ${b.notes && b.notes !== 'Nenhuma' ? `<p class="text-[11px] text-zinc-400 italic bg-obsidian-950 p-2 rounded-lg border border-zinc-800/80 break-words">"${b.notes}"</p>` : ''}
-                            ${isRejected && b.rejectReason ? `<p class="text-[11px] text-red-400 break-words">Motivo: ${b.rejectReason}</p>` : ''}
                         </div>
 
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80">
@@ -944,23 +1134,17 @@
                             </a>
 
                             <div class="flex items-center gap-1.5">
-                                ${!isCompleted && !isRejected ? `
+                                ${!isCompleted ? `
                                     <button type="button" onclick="markBookingCompleted('${b.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 transition">
                                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                         <span>Concluir</span>
                                     </button>
                                 ` : ''}
 
-                                ${!isRejected ? `
-                                    <button type="button" onclick="openRejectModal('${b.id}')" class="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-xs font-bold flex items-center gap-1 transition">
-                                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-                                        <span>Rejeitar</span>
-                                    </button>
-                                ` : `
-                                    <button type="button" onclick="deleteBookingPermanent('${b.id}')" class="px-2.5 py-2 rounded-xl bg-obsidian-800 text-zinc-400 hover:text-red-400 text-xs transition" title="Excluir registro">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                `}
+                                <button type="button" onclick="openRejectModal('${b.id}')" class="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-xs font-bold flex items-center gap-1 transition">
+                                    <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                    <span>Rejeitar</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1014,6 +1198,7 @@
             const customReason = document.getElementById('reject-custom-reason').value.trim();
             const finalReason = (selectReason === 'custom' && customReason) ? customReason : (customReason || selectReason);
 
+            // Marca como rejeitado — sai imediatamente da tela da agenda
             bookings[idx].status = 'rejected';
             bookings[idx].rejectReason = finalReason;
             const rejectedBooking = bookings[idx];
@@ -1021,7 +1206,7 @@
             closeRejectModal();
             renderOwnerBookings();
             renderFinanceDashboard();
-            runLocalMovementAI();
+            runSimpleBarberAI();
 
             await postToGoogleSheets({
                 action: 'updateBookingStatus',
@@ -1030,25 +1215,18 @@
                 rejectReason: finalReason
             });
 
-            showToastBanner('Horário Rejeitado', `Horário das ${rejectedBooking.time} liberado na planilha.`);
+            showToastBanner('Pedido Rejeitado', `Horário das ${rejectedBooking.time} liberado e removido da tela.`);
 
             if (sendWhatsApp) {
                 const cleanClientPhone = rejectedBooking.clientPhone.replace(/\D/g, '');
                 const fullPhone = cleanClientPhone.startsWith('55') ? cleanClientPhone : `55${cleanClientPhone}`;
-                const msg = `Olá *${rejectedBooking.clientName}*, aqui é da *Secreta Barber*. Infelizmente precisei cancelar/rejeitar seu horário do dia *${rejectedBooking.dateDisplay} às ${rejectedBooking.time}* (${rejectedBooking.serviceName}).%0A*Motivo:* ${encodeURIComponent(finalReason)}.%0ASe quiser, pode escolher outro horário disponível no nosso link!`;
+                const msg = `Olá *${rejectedBooking.clientName}*, aqui é da *Secret Barber*. Infelizmente precisei cancelar seu horário do dia *${rejectedBooking.dateDisplay} às ${rejectedBooking.time}* (${rejectedBooking.serviceName}).%0A*Motivo:* ${encodeURIComponent(finalReason)}.%0ASe quiser, pode escolher outro horário disponível no nosso link!`;
                 window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank', 'noopener,noreferrer');
             }
         }
 
-        async function deleteBookingPermanent(id) {
-            bookings = bookings.filter(b => b.id !== id);
-            renderOwnerBookings();
-            renderFinanceDashboard();
-            await postToGoogleSheets({ action: 'removeBooking', id });
-        }
-
         // ==========================================
-        // 7. GESTÃO DE HORÁRIOS NA PLANILHA GOOGLE
+        // 6. GESTÃO DE HORÁRIOS NA PLANILHA GOOGLE
         // ==========================================
         function renderWorkDaysSelector() {
             const container = document.getElementById('work-days-grid');
@@ -1116,7 +1294,7 @@
 
             renderOwnerSlotsGrid();
             renderOwnerBookings();
-            runLocalMovementAI();
+            runSimpleBarberAI();
 
             const btn = document.getElementById('btn-save-schedule');
             btn.disabled = true;
@@ -1149,7 +1327,7 @@
 
             input.value = '';
             renderOwnerSlotsGrid();
-            runLocalMovementAI();
+            runSimpleBarberAI();
 
             const res = await postToGoogleSheets({
                 action: 'addCustomTimeSlot',
@@ -1157,7 +1335,7 @@
             });
 
             if (res.status === 'ok') {
-                showToastBanner('Horário Adicionado!', `O horário ${newTime} já está disponível para clientes.`);
+                showToastBanner('Horário Adicionado!', `O horário ${newTime} já está disponível na planilha.`);
             }
         }
 
@@ -1191,7 +1369,7 @@
             }
 
             renderOwnerSlotsGrid();
-            runLocalMovementAI();
+            runSimpleBarberAI();
 
             await postToGoogleSheets({
                 action: 'toggleTimeSlot',
@@ -1201,7 +1379,113 @@
         }
 
         // ==========================================
-        // 8. CONTABILIDADE, FATURAMENTO MENSAL E LUCRO
+        // 7. GESTÃO DE CORTES E PREÇOS (ABA CORTES -> PLANILHA)
+        // ==========================================
+        function renderServicesList() {
+            const container = document.getElementById('owner-services-list');
+            document.getElementById('services-count-badge').textContent = `${servicesList.length} cadastrado(s)`;
+
+            if (servicesList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-3">Nenhum corte carregado ainda. Adicione acima ou sincronize a planilha.</p>`;
+                return;
+            }
+
+            container.innerHTML = servicesList.map(srv => `
+                <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3 space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <input type="text" id="srv-name-${srv.id}" value="${srv.name}"
+                            class="flex-1 px-2.5 py-1.5 rounded-lg bg-obsidian-900 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-amber-500">
+                        <button type="button" onclick="handleDeleteService('${srv.id}')" class="p-1.5 text-zinc-500 hover:text-red-400 transition" title="Excluir corte">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center bg-obsidian-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 flex-1">
+                            <span class="text-xs text-emerald-400 font-bold mr-1">R$</span>
+                            <input type="number" step="0.01" min="0" id="srv-price-${srv.id}" value="${Number(srv.price).toFixed(2)}"
+                                class="w-full bg-transparent text-xs font-extrabold text-white focus:outline-none">
+                        </div>
+                        <span class="text-[11px] text-zinc-400 shrink-0">${srv.duration || '30 min'}</span>
+                        <button type="button" onclick="handleUpdateService('${srv.id}')"
+                            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 transition">
+                            Salvar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function handleAddNewService(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-srv-name');
+            const priceInput = document.getElementById('new-srv-price');
+            const durationSelect = document.getElementById('new-srv-duration');
+
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+            const duration = durationSelect.value;
+
+            if (!name || isNaN(price) || price < 0) return;
+
+            const newService = {
+                id: 'srv_' + Date.now(),
+                name,
+                price,
+                duration,
+                active: true
+            };
+
+            servicesList.push(newService);
+            e.target.reset();
+            renderServicesList();
+
+            const res = await postToGoogleSheets({
+                action: 'saveService',
+                service: newService
+            });
+
+            if (res.status === 'ok') {
+                showToastBanner('Corte Adicionado!', `${name} (${formatBRL(price)}) salvo na Planilha Google.`);
+            }
+        }
+
+        async function handleUpdateService(id) {
+            const idx = servicesList.findIndex(s => s.id === id);
+            if (idx === -1) return;
+
+            const newName = document.getElementById(`srv-name-${id}`).value.trim();
+            const newPrice = parseFloat(document.getElementById(`srv-price-${id}`).value);
+
+            if (!newName || isNaN(newPrice) || newPrice < 0) {
+                showToastBanner('Valor Inválido', 'Confira o nome e o preço digitado.');
+                return;
+            }
+
+            servicesList[idx].name = newName;
+            servicesList[idx].price = newPrice;
+            renderServicesList();
+
+            const res = await postToGoogleSheets({
+                action: 'saveService',
+                service: servicesList[idx]
+            });
+
+            if (res.status === 'ok') {
+                showToastBanner('Preço Atualizado!', `${newName} agora custa ${formatBRL(newPrice)} na planilha.`);
+            }
+        }
+
+        async function handleDeleteService(id) {
+            servicesList = servicesList.filter(s => s.id !== id);
+            renderServicesList();
+            await postToGoogleSheets({ action: 'deleteService', id });
+            showToastBanner('Corte Removido', 'Serviço excluído da planilha.');
+        }
+
+        // ==========================================
+        // 8. CONTABILIDADE & CAIXA
         // ==========================================
         function renderFinanceDashboard() {
             const selectedMonth = document.getElementById('finance-month-picker').value;
@@ -1310,7 +1594,7 @@
                 action: 'addTransaction',
                 transaction: newTx
             });
-            showToastBanner('Lançamento Salvo', `${type === 'income' ? 'Receita' : 'Despesa'} de ${formatBRL(amount)} registrada na planilha.`);
+            showToastBanner('Lançamento Salvo', `${type === 'income' ? 'Receita' : 'Despesa'} de ${formatBRL(amount)} salva na planilha.`);
         }
 
         async function deleteTransaction(id) {
@@ -1320,108 +1604,69 @@
         }
 
         // ==========================================
-        // 9. IA LOCAL DE MOVIMENTO
+        // 9. IA SIMPLES DO BARBEIRO (BÁSICA E DIRETA)
         // ==========================================
-        function runLocalMovementAI() {
+        function runSimpleBarberAI() {
             const todayIso = getLocalDateIso(new Date());
             const openSlots = (scheduleConfig.activeSlots || []).filter(s => !(scheduleConfig.disabledSlots || []).includes(s));
-            const totalCapacityToday = Math.max(openSlots.length, 1);
+            const totalSlots = Math.max(openSlots.length, 1);
 
-            const validBookings = bookings.filter(b => b.status !== 'rejected');
-            const todayBookings = validBookings.filter(b => b.dateIso === todayIso);
+            const todayBookings = bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected');
+            const countToday = todayBookings.length;
+            const pct = Math.min(100, Math.round((countToday / totalSlots) * 100));
 
-            const occupancyPct = Math.min(100, Math.round((todayBookings.length / totalCapacityToday) * 100));
             const occBar = document.getElementById('ai-occupancy-bar');
             const occBadge = document.getElementById('ai-occupancy-badge');
             const occSummary = document.getElementById('ai-occupancy-summary');
 
-            occBar.style.width = `${occupancyPct}%`;
+            occBar.style.width = `${pct}%`;
 
-            if (occupancyPct >= 75) {
+            if (countToday >= 5) {
                 occBar.className = 'h-full bg-emerald-500 transition-all duration-500';
-                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400';
-                occBadge.textContent = `Alta Demanda (${occupancyPct}%)`;
-                occSummary.textContent = `Hoje você tem ${todayBookings.length} de ${totalCapacityToday} horários ocupados. Movimento forte!`;
-            } else if (occupancyPct >= 35) {
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400';
+                occBadge.textContent = 'Dia Cheio';
+                occSummary.textContent = `Você tem ${countToday} clientes marcados hoje. O movimento está bom!`;
+            } else if (countToday >= 2) {
                 occBar.className = 'h-full bg-amber-500 transition-all duration-500';
-                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400';
-                occBadge.textContent = `Moderado (${occupancyPct}%)`;
-                occSummary.textContent = `Você preencheu ${todayBookings.length} de ${totalCapacityToday} horários hoje. Restam ${totalCapacityToday - todayBookings.length} vagas livres.`;
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400';
+                occBadge.textContent = 'Dia Normal';
+                occSummary.textContent = `Tem ${countToday} clientes marcados hoje. Ainda cabem mais alguns encaixes.`;
             } else {
                 occBar.className = 'h-full bg-sky-500 transition-all duration-500';
-                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-sky-500/20 text-sky-400';
-                occBadge.textContent = `Calmo (${occupancyPct}%)`;
-                occSummary.textContent = `${todayBookings.length} de ${totalCapacityToday} horários ocupados hoje. Divulgue os horários livres nos Status do WhatsApp.`;
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-400';
+                occBadge.textContent = 'Dia Fraco';
+                occSummary.textContent = `Por enquanto só tem ${countToday} cliente(s) marcado(s) hoje.`;
             }
 
-            const slotCounts = {};
-            openSlots.forEach(s => slotCounts[s] = 0);
-            validBookings.forEach(b => {
-                if (slotCounts[b.time] !== undefined) {
-                    slotCounts[b.time] += 1;
-                }
-            });
-
-            const maxCount = Math.max(...Object.values(slotCounts), 1);
-            const heatmapEl = document.getElementById('ai-hourly-heatmap');
-
-            heatmapEl.innerHTML = openSlots.map(slot => {
-                const count = slotCounts[slot] || 0;
-                const hourNum = parseInt(slot.split(':')[0], 10);
-                const naturalWeight = (hourNum >= 17 || hourNum === 10 || hourNum === 11) ? 1 : 0;
-                const score = count + naturalWeight;
-
-                let levelLabel = 'Calmo';
-                let cardStyle = 'bg-obsidian-950 border-zinc-800 text-zinc-400';
-                if (count >= 2 || (count === maxCount && count > 0) || score >= 2) {
-                    levelLabel = 'Pico';
-                    cardStyle = 'bg-amber-500/15 border-amber-500/50 text-amber-300';
-                } else if (score === 1) {
-                    levelLabel = 'Médio';
-                    cardStyle = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
-                }
-
-                return `
-                    <div class="p-2.5 rounded-xl border ${cardStyle} text-center">
-                        <span class="block text-xs font-extrabold">${slot}</span>
-                        <span class="block text-[10px] uppercase mt-0.5 opacity-90">${levelLabel} (${count})</span>
-                    </div>
-                `;
-            }).join('');
-
-            const recommendations = [];
-            const bookedTodaySet = new Set(todayBookings.map(b => b.time));
-            const freeToday = openSlots.filter(s => !bookedTodaySet.has(s));
-
-            if (freeToday.length > 0) {
-                const sampleFree = freeToday.slice(0, 3).join(', ');
-                recommendations.push({
-                    icon: 'sparkles',
+            // Dicas simples e diretas (nada complexo)
+            const simpleTips = [
+                {
+                    icon: 'message-square',
                     color: 'text-amber-400',
-                    title: 'Vagas Livres Hoje',
-                    desc: `Você tem ${freeToday.length} horários livres hoje (ex: ${sampleFree}). Poste nos Status do WhatsApp para preencher.`
-                });
-            }
-
-            const srvFreq = {};
-            validBookings.forEach(b => srvFreq[b.serviceName] = (srvFreq[b.serviceName] || 0) + 1);
-            const topSrv = Object.entries(srvFreq).sort((a, b) => b[1] - a[1])[0];
-            if (topSrv) {
-                recommendations.push({
-                    icon: 'award',
+                    title: 'Avisa nos Status do WhatsApp',
+                    desc: `Ainda sobraram ${Math.max(0, totalSlots - countToday)} horários livres hoje. Posta uma foto avisando que tem vaga.`
+                },
+                {
+                    icon: 'scissors',
                     color: 'text-emerald-400',
-                    title: `Carro-Chefe: ${topSrv[0]}`,
-                    desc: `Serviço mais agendado (${topSrv[1]} vezes). Mantenha insumos sempre prontos.`
-                });
-            }
+                    title: 'Deixa a bancada pronta',
+                    desc: 'Confere se as máquinas estão carregadas e se tem lâmina nova antes do próximo cliente chegar.'
+                },
+                {
+                    icon: 'coffee',
+                    color: 'text-sky-400',
+                    title: 'Bebe água e descansa',
+                    desc: 'Entre um corte e outro, aproveita para beber água e dar uma varrida rápida no chão.'
+                }
+            ];
 
             const recListEl = document.getElementById('ai-recommendations-list');
-            recListEl.innerHTML = recommendations.map(rec => `
+            recListEl.innerHTML = simpleTips.map(tip => `
                 <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3 flex items-start gap-2.5">
-                    <i data-lucide="${rec.icon}" class="w-4 h-4 ${rec.color} shrink-0 mt-0.5"></i>
+                    <i data-lucide="${tip.icon}" class="w-4 h-4 ${tip.color} shrink-0 mt-0.5"></i>
                     <div class="min-w-0">
-                        <p class="text-xs font-bold text-white">${rec.title}</p>
-                        <p class="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">${rec.desc}</p>
+                        <p class="text-xs font-bold text-white">${tip.title}</p>
+                        <p class="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">${tip.desc}</p>
                     </div>
                 </div>
             `).join('');
