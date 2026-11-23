@@ -1,23 +1,17 @@
 {
   "short_name": "Secreta Barber",
-  "name": "Secreta Barber - Agendamento",
+  "name": "Secreta Barber - Painel",
   "icons": [
     {
-      "src": "logo.jpg?v=2",
-      "type": "image/jpeg",
-      "sizes": "1254x1254",
-      "purpose": "any"
-    },
-    {
-      "src": "logo.jpg?v=2",
+      "src": "logo.jpg?v=3",
       "type": "image/jpeg",
       "sizes": "1254x1254",
       "purpose": "any"
     }
   ],
-  "start_url": "./index.html",
-  "background_color": "#0a081d",
-  "theme_color": "#0a081d",
+  "start_url": "./admin.html",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
   "display": "standalone",
   "orientation": "portrait"
 }
