@@ -5,15 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Secreta Barber | Painel do Proprietário (PWA)</title>
 
+    <!-- ===================================================================== -->
+    <!-- CONFIGURAÇÃO INICIAL (COLE A URL DO SEU GOOGLE APPS SCRIPT ABAIXO)    -->
+    <!-- ===================================================================== -->
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7wHmfBw_7MOP172wvp7eZY9DkhKkAkOZndB7L0QF2jFleY7dOEtbecMNmyxWtPioi/exec";
+        const ONESIGNAL_APP_ID = "de473ebd-0f05-4d9e-8ba3-ba57e5066316";
+    </script>
+
     <!-- Meta Tags PWA para Android & iOS -->
     <meta name="theme-color" content="#09090B">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Secreta Admin">
     <meta name="description" content="Painel de Gestão, Agenda, Contabilidade e IA de Movimento - Secreta Barber">
 
-    <!-- Manifest PWA dinâmico será injetado via JS -->
+    <!-- Manifest & Apple Touch Icon dinâmicos -->
     <link id="pwa-manifest-link" rel="manifest" href="">
+    <link id="apple-touch-icon-link" rel="apple-touch-icon" href="">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -53,16 +63,17 @@
             box-sizing: border-box;
         }
         html, body {
-            max-width: 100%;
+            width: 100%;
+            max-width: 100vw;
             overflow-x: hidden;
             background-color: #09090B;
             color: #F4F4F5;
             -webkit-tap-highlight-color: transparent;
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
         }
         ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+            width: 4px;
+            height: 4px;
         }
         ::-webkit-scrollbar-track {
             background: #121215;
@@ -85,10 +96,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen w-full flex flex-col selection:bg-amber-500 selection:text-black pb-24">
+<body class="min-h-screen w-full flex flex-col selection:bg-amber-500 selection:text-black">
 
     <!-- BANNER DE NOTIFICAÇÃO PUSH INTERNA (TOPO) -->
-    <div id="owner-toast-banner" class="fixed top-3 left-0 right-0 mx-auto z-50 w-[94%] max-w-md transform -translate-y-44 opacity-0 transition-all duration-500 pointer-events-none">
+    <div id="owner-toast-banner" class="fixed top-3 left-0 right-0 mx-auto z-50 w-[92%] max-w-md transform -translate-y-44 opacity-0 transition-all duration-500 pointer-events-none">
         <div class="bg-obsidian-800/95 backdrop-blur-md border border-amber-500/70 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 pointer-events-auto">
             <div class="relative w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 animate-ring">
                 <i data-lucide="bell-ring" class="w-4 h-4"></i>
@@ -98,7 +109,7 @@
                     <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">Secreta Barber • Proprietário</span>
                     <span class="text-[10px] text-zinc-400 shrink-0">Agora</span>
                 </div>
-                <p id="toast-title" class="text-xs sm:text-sm font-bold text-white truncate mt-0.5">Alerta do Sistema</p>
+                <p id="toast-title" class="text-xs sm:text-sm font-bold text-white mt-0.5 break-words">Alerta do Sistema</p>
                 <p id="toast-desc" class="text-xs text-zinc-300 mt-0.5 break-words">Mensagem...</p>
             </div>
             <button type="button" onclick="hideToastBanner()" class="text-zinc-400 hover:text-white p-1 shrink-0">
@@ -109,70 +120,79 @@
 
     <!-- CABEÇALHO SUPERIOR FIXO -->
     <header class="sticky top-0 z-40 w-full bg-obsidian-950/95 backdrop-blur-md border-b border-zinc-800/80">
-        <div class="w-full max-w-2xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+        <div class="w-full max-w-xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
             <!-- Identidade Proprietário -->
-            <div class="flex items-center gap-2.5 min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black font-extrabold shadow shrink-0">
                     <i data-lucide="crown" class="w-4 h-4"></i>
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
-                        <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white leading-tight truncate">
-                            SECRETA <span class="text-amber-400">BARBER</span>
+                        <h1 class="text-sm font-extrabold tracking-tight text-white leading-tight truncate">
+                            SECRETA <span class="text-amber-400">ADMIN</span>
                         </h1>
-                        <span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-extrabold text-amber-400 uppercase shrink-0">Dono</span>
+                        <span id="sheet-sync-badge" class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-extrabold text-amber-400 uppercase shrink-0">Sync</span>
                     </div>
-                    <p class="text-[11px] text-zinc-400 flex items-center gap-1.5 truncate">
+                    <p class="text-[10px] text-zinc-400 flex items-center gap-1 truncate">
                         <span id="onesignal-header-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-500 inline-block shrink-0"></span>
-                        <span id="onesignal-header-status" class="truncate">Push OneSignal: Verificando...</span>
-            <!-- Ações Rápidas (Ativar Push + Instalar PWA + Simular Cliente) -->
+                        <span id="onesignal-header-status" class="truncate">Push: Verificando...</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas (Ativar Push + Instalar na Tela Inicial + Sincronizar) -->
             <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" id="btn-enable-push" onclick="requestOneSignalPermission()" class="px-2.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1" title="Ativar notificações push neste celular">
-                    <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Ativar Push</span>
+                <button type="button" id="btn-enable-push" onclick="requestOneSignalPermission()" class="p-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1" title="Ativar notificações push">
+                    <i data-lucide="bell-ring" class="w-4 h-4"></i>
                 </button>
-                <button type="button" id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden px-2.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>App</span>
+                <button type="button" id="btn-install-pwa" onclick="triggerPwaInstall()" class="px-2.5 py-2 rounded-xl text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-black transition flex items-center gap-1" title="Adicionar à Tela Inicial">
+                    <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                    <span>Instalar</span>
                 </button>
-                <button type="button" onclick="simulateNewClientBooking()" class="px-3 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5" title="Simular cliente marcando horário agora">
-                    <i data-lucide="bell-plus" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Simular Cliente</span>
-                    <span class="sm:hidden">Testar</span>
+                <button type="button" onclick="syncAllFromGoogleSheets(true)" class="p-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-zinc-200 border border-zinc-700 transition" title="Sincronizar Planilha">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- ALERTA CASO A URL DO APPS SCRIPT NÃO TENHA SIDO COLADA -->
+    <div id="missing-url-warning" class="hidden w-full max-w-xl mx-auto px-3 pt-3">
+        <div class="bg-red-500/10 border border-red-500/40 rounded-2xl p-3 text-xs text-red-200 flex items-start gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400 shrink-0 mt-0.5"></i>
+            <p class="break-words"><strong>Planilha desconectada:</strong> Cole a URL <code>/exec</code> do Google Apps Script na linha 8 do código HTML.</p>
+        </div>
+    </div>
+
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 py-4 space-y-5">
+    <main class="flex-1 w-full max-w-xl mx-auto px-3 py-4 space-y-4">
 
         <!-- ========================================================= -->
         <!-- ABA 1: AGENDA & CLIENTES (ACEITAR / CONCLUIR / REJEITAR)  -->
         <!-- ========================================================= -->
-        <section id="tab-agenda" class="space-y-4 w-full">
+        <section id="tab-agenda" class="space-y-3.5 w-full">
 
             <!-- Cards Resumo Rápido do Dia -->
-            <div class="grid grid-cols-3 gap-2.5">
-                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
-                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Marcados Hoje</span>
-                    <span id="stat-today-count" class="text-lg sm:text-xl font-extrabold text-white mt-0.5 block">0</span>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Hoje</span>
+                    <span id="stat-today-count" class="text-lg font-extrabold text-white mt-0.5 block">0</span>
                 </div>
-                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
-                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Previsto Hoje</span>
-                    <span id="stat-today-revenue" class="text-base sm:text-xl font-extrabold text-emerald-400 mt-0.5 block truncate">R$ 0</span>
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Previsto</span>
+                    <span id="stat-today-revenue" class="text-sm sm:text-lg font-extrabold text-emerald-400 mt-0.5 block truncate">R$ 0</span>
                 </div>
-                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
-                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Fecha às</span>
-                    <span id="stat-closing-time" class="text-lg sm:text-xl font-extrabold text-amber-400 mt-0.5 block">19:00</span>
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block truncate">Fecha às</span>
+                    <span id="stat-closing-time" class="text-lg font-extrabold text-amber-400 mt-0.5 block">19:00</span>
                 </div>
             </div>
 
             <!-- Filtro de Data e Status -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3.5 space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                        <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-400"></i>
+                    <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
+                        <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-400 shrink-0"></i>
                         <span>Clientes Agendados</span>
                     </h2>
                     <div class="flex items-center gap-1.5">
@@ -200,43 +220,43 @@
         </section>
 
         <!-- ========================================================= -->
-        <!-- ABA 2: HORÁRIOS DE TRABALHO (ABERTURA, FECHAMENTO, SLOTS) -->
+        <!-- ABA 2: HORÁRIOS DE TRABALHO (PLANILHA GOOGLE SINCRONIZADA)-->
         <!-- ========================================================= -->
         <section id="tab-horarios" class="hidden space-y-4 w-full">
 
-            <!-- Configuração de Expediente (Até que horas vai trabalhar) -->
-            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+            <!-- Configuração de Expediente -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-4">
                 <div class="border-b border-zinc-800 pb-3">
-                    <h2 class="text-base font-bold text-white flex items-center gap-2">
-                        <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
-                        <span>Expediente & Horário de Fechamento</span>
+                    <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                        <span>Expediente & Grade Automática</span>
                     </h2>
-                    <p class="text-xs text-zinc-400 mt-0.5">Defina até que horas você vai trabalhar e quais horários ficam abertos para os clientes.</p>
+                    <p class="text-xs text-zinc-400 mt-0.5">Ao salvar, sua Planilha Google e o site dos clientes atualizam na hora.</p>
                 </div>
 
                 <!-- Dias da Semana que Trabalha -->
                 <div class="space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400">Dias de Atendimento</label>
-                    <div id="work-days-grid" class="grid grid-cols-7 gap-1.5">
+                    <div id="work-days-grid" class="grid grid-cols-7 gap-1">
                         <!-- Renderizado via JS -->
                     </div>
                 </div>
 
-                <!-- Início, Fim (Até que horas trabalha) e Intervalo -->
+                <!-- Início, Fim e Intervalo -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs text-zinc-300 mb-1">Início do Expediente</label>
                         <input type="time" id="cfg-open-time" value="09:00"
-                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-amber-500">
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-sm text-white focus:outline-none focus:border-amber-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-amber-400 mb-1">Trabalhar Até (Fechamento)</label>
+                        <label class="block text-xs font-bold text-amber-400 mb-1">Trabalhar Até (Fechar)</label>
                         <input type="time" id="cfg-close-time" value="19:00"
-                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-amber-500/50 text-sm font-bold text-white focus:outline-none focus:border-amber-500">
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-amber-500/50 text-base sm:text-sm font-bold text-white focus:outline-none focus:border-amber-500">
                     </div>
                     <div>
                         <label class="block text-xs text-zinc-300 mb-1">Intervalo entre Cortes</label>
-                        <select id="cfg-slot-interval" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-amber-500">
+                        <select id="cfg-slot-interval" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-sm text-white focus:outline-none focus:border-amber-500">
                             <option value="30">A cada 30 min</option>
                             <option value="45" selected>A cada 45 min</option>
                             <option value="60">A cada 60 min</option>
@@ -249,7 +269,7 @@
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
                             <i data-lucide="coffee" class="w-3.5 h-3.5 text-amber-400"></i>
-                            Pausa para Almoço / Descanso
+                            Pausa para Almoço
                         </span>
                         <label class="inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="cfg-lunch-enabled" checked class="accent-amber-500 w-4 h-4">
@@ -260,27 +280,42 @@
                         <div>
                             <label class="block text-[11px] text-zinc-400 mb-1">Início da Pausa</label>
                             <input type="time" id="cfg-lunch-start" value="12:00"
-                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-xs text-white">
+                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-sm text-white">
                         </div>
                         <div>
                             <label class="block text-[11px] text-zinc-400 mb-1">Fim da Pausa</label>
                             <input type="time" id="cfg-lunch-end" value="13:30"
-                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-xs text-white">
+                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-sm text-white">
                         </div>
                     </div>
                 </div>
 
-                <button type="button" onclick="saveAndGenerateSchedule()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider transition">
-                    Gerar & Salvar Grade de Horários
+                <button type="button" id="btn-save-schedule" onclick="saveAndGenerateSchedule()" class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-wider transition">
+                    Salvar Grade na Planilha Google
                 </button>
             </div>
 
-            <!-- Seleção Fina: Quais Horários Vai Trabalhar (Ativar/Bloquear um por um) -->
-            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+            <!-- Adicionar Horário Extra Avulso -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Adicionar Horário Extra Avulso</span>
+                </h3>
+                <form onsubmit="handleAddCustomSlot(event)" class="flex gap-2">
+                    <input type="time" id="custom-extra-slot" required
+                        class="flex-1 px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-sm text-white focus:outline-none focus:border-amber-500">
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase shrink-0">
+                        Adicionar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Seleção Fina: Bloquear ou Liberar Horários Individuais -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between gap-2">
-                    <div>
-                        <h3 class="text-sm font-bold text-white">Quais Horários Vão Ficar Abertos</h3>
-                        <p class="text-[11px] text-zinc-400">Toque para bloquear ou liberar um horário específico.</p>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white">Bloquear ou Liberar Horários</h3>
+                        <p class="text-[11px] text-zinc-400">Toque em um horário para fechar ou reabrir para clientes.</p>
                     </div>
                     <span id="active-slots-badge" class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold shrink-0">0 abertos</span>
                 </div>
@@ -306,9 +341,8 @@
                     class="px-3 py-2 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-amber-500">
             </div>
 
-            <!-- Cards Principais: Faturamento Bruto, Despesas e Lucro Líquido -->
+            <!-- Cards Principais -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- Faturamento -->
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-semibold text-zinc-400">Faturamento Mensal</span>
@@ -320,7 +354,6 @@
                     <p id="fin-cuts-count-label" class="text-[11px] text-zinc-400 mt-1">0 atendimentos no mês</p>
                 </div>
 
-                <!-- Despesas -->
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-semibold text-zinc-400">Despesas / Custos</span>
@@ -332,7 +365,6 @@
                     <p class="text-[11px] text-zinc-400 mt-1">Produtos, aluguel, luz, etc.</p>
                 </div>
 
-                <!-- Lucro Líquido -->
                 <div class="bg-gradient-to-br from-obsidian-900 to-obsidian-800 border border-amber-500/40 rounded-2xl p-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-amber-400">Lucro Líquido</span>
@@ -349,9 +381,7 @@
                     <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i>
                     <span>Receita por Tipo de Serviço</span>
                 </h3>
-                <div id="fin-services-breakdown" class="space-y-2.5">
-                    <!-- Barras de progresso geradas via JS -->
-                </div>
+                <div id="fin-services-breakdown" class="space-y-2.5"></div>
             </div>
 
             <!-- Lançar Receita Extra ou Despesa -->
@@ -366,20 +396,17 @@
                         <option value="income">Receita Extra (+)</option>
                     </select>
                     <input type="text" id="tx-desc" required placeholder="Ex: Pomada, Lâminas, Aluguel..."
-                        class="sm:col-span-2 px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
+                        class="sm:col-span-2 px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-amber-500">
                     <div class="flex gap-2">
                         <input type="number" id="tx-amount" step="0.01" min="0.01" required placeholder="R$ 0,00"
-                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-amber-500">
                         <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shrink-0">
                             Salvar
                         </button>
                     </div>
                 </form>
 
-                <!-- Extrato de Lançamentos Manuais do Mês -->
-                <div id="fin-transactions-list" class="space-y-2 pt-2 border-t border-zinc-800/80 max-h-60 overflow-y-auto">
-                    <!-- Renderizado via JS -->
-                </div>
+                <div id="fin-transactions-list" class="space-y-2 pt-2 border-t border-zinc-800/80 max-h-60 overflow-y-auto"></div>
             </div>
         </section>
 
@@ -387,27 +414,25 @@
         <!-- ABA 4: IA LOCAL DE MOVIMENTO (ANÁLISE ESTATÍSTICA LOCAL)  -->
         <!-- ========================================================= -->
         <section id="tab-ia" class="hidden space-y-4 w-full">
-
-            <!-- Cabeçalho da IA Local -->
-            <div class="bg-gradient-to-r from-obsidian-900 via-obsidian-800 to-obsidian-900 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-2">
+            <div class="bg-gradient-to-r from-obsidian-900 via-obsidian-800 to-obsidian-900 border border-amber-500/30 rounded-2xl p-4 space-y-2">
                 <div class="flex items-center justify-between gap-2">
                     <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
                         <i data-lucide="cpu" class="w-3 h-3"></i>
-                        IA Local Offline • Motor Heurístico
+                        IA Local • Radar de Movimento
                     </span>
                     <button type="button" onclick="runLocalMovementAI()" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition">
                         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                         <span>Recalcular</span>
                     </button>
                 </div>
-                <h2 class="text-base sm:text-lg font-bold text-white">Previsão & Radar de Movimento</h2>
-                <p class="text-xs text-zinc-400">Analisa automaticamente seus horários marcados, taxa de ocupação, horários ociosos e frequência dos clientes sem depender de internet.</p>
+                <h2 class="text-base font-bold text-white">Previsão & Ocupação da Barbearia</h2>
+                <p class="text-xs text-zinc-400">Analisa horários marcados, horários de pico e vagas livres automaticamente.</p>
             </div>
 
             <!-- Termômetro de Movimento Atual -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold uppercase text-zinc-400">Termômetro de Movimento (Hoje)</span>
+                    <span class="text-xs font-bold uppercase text-zinc-400">Ocupação Hoje</span>
                     <span id="ai-occupancy-badge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-zinc-800 text-zinc-300">Calculando...</span>
                 </div>
                 <div class="w-full h-3 bg-obsidian-950 rounded-full overflow-hidden border border-zinc-800">
@@ -416,7 +441,7 @@
                 <p id="ai-occupancy-summary" class="text-xs text-zinc-300 leading-relaxed">Analisando agenda...</p>
             </div>
 
-            <!-- Mapa de Calor por Horário (Pico vs. Baixo Movimento) -->
+            <!-- Mapa de Calor por Horário -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                     <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -425,28 +450,23 @@
                     </h3>
                     <span class="text-[11px] text-zinc-400">Base histórica</span>
                 </div>
-                <div id="ai-hourly-heatmap" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    <!-- Renderizado via JS -->
-                </div>
+                <div id="ai-hourly-heatmap" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
             </div>
 
-            <!-- Diagnóstico & Recomendações Práticas da IA -->
+            <!-- Recomendações -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
-                    <span>Recomendações Inteligentes para Você</span>
+                    <span>Recomendações Inteligentes</span>
                 </h3>
-                <div id="ai-recommendations-list" class="space-y-2.5">
-                    <!-- Insights gerados pelo motor local -->
-                </div>
+                <div id="ai-recommendations-list" class="space-y-2.5"></div>
             </div>
         </section>
-
     </main>
 
     <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (ESTILO APP NATIVO MOBILE - 4 ABAS) -->
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90">
-        <div class="max-w-2xl mx-auto grid grid-cols-4 px-1 py-1.5">
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90 pb-[env(safe-area-inset-bottom)]">
+        <div class="max-w-xl mx-auto grid grid-cols-4 px-1 py-1.5">
             <button type="button" onclick="switchOwnerTab('agenda')" id="nav-agenda" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-amber-400 font-bold transition">
                 <div class="relative">
                     <i data-lucide="calendar-check" class="w-5 h-5"></i>
@@ -472,6 +492,37 @@
         </div>
     </nav>
 
+    <!-- MODAL DE INSTALAÇÃO NA TELA INICIAL (ANDROID E IPHONE/IOS) -->
+    <div id="pwa-install-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-3">
+        <div class="bg-obsidian-900 border border-amber-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="smartphone" class="w-5 h-5 text-amber-400"></i>
+                    <span>Instalar App no Celular</span>
+                </h3>
+                <button type="button" onclick="closePwaModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-zinc-300 leading-relaxed">
+                Adicione o <strong>Secreta Admin</strong> à tela inicial do seu telefone para abrir em tela cheia como um aplicativo nativo:
+            </p>
+            <div class="space-y-2.5 text-xs">
+                <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3">
+                    <p class="font-bold text-amber-400 mb-1">No Android (Chrome):</p>
+                    <p class="text-zinc-300">Toque nos <strong>3 pontinhos (⋮)</strong> no canto superior direito do navegador e selecione <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar aplicativo"</strong>.</p>
+                </div>
+                <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3">
+                    <p class="font-bold text-sky-400 mb-1">No iPhone (Safari):</p>
+                    <p class="text-zinc-300">Toque no ícone de <strong>Compartilhar (quadrado com seta para cima)</strong> na barra inferior e escolha <strong>"Adicionar à Tela de Início"</strong>.</p>
+                </div>
+            </div>
+            <button type="button" onclick="closePwaModal()" class="w-full py-3 rounded-xl bg-amber-500 text-black font-bold text-xs uppercase">
+                Entendi
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL DE REJEIÇÃO DE HORÁRIO -->
     <div id="reject-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-3">
         <div class="bg-obsidian-900 border border-red-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
@@ -484,11 +535,11 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <p id="reject-client-info" class="text-xs text-zinc-300 bg-obsidian-950 p-3 rounded-xl border border-zinc-800">
+            <p id="reject-client-info" class="text-xs text-zinc-300 bg-obsidian-950 p-3 rounded-xl border border-zinc-800 break-words">
                 Cliente...
             </p>
             <div>
-                <label class="block text-xs text-zinc-400 mb-1">Motivo da rejeição (enviado no WhatsApp do cliente)</label>
+                <label class="block text-xs text-zinc-400 mb-1">Motivo da rejeição</label>
                 <select id="reject-reason-select" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white mb-2">
                     <option value="Imprevisto pessoal neste horário">Imprevisto pessoal neste horário</option>
                     <option value="Expediente encerrado mais cedo hoje">Expediente encerrado mais cedo hoje</option>
@@ -496,7 +547,7 @@
                     <option value="custom">Outro motivo...</option>
                 </select>
                 <input type="text" id="reject-custom-reason" placeholder="Digite o motivo (opcional)"
-                    class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-red-500">
+                    class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-base sm:text-xs text-white focus:outline-none focus:border-red-500">
             </div>
             <div class="flex flex-col gap-2 pt-1">
                 <button type="button" onclick="confirmRejectBooking(true)" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition">
@@ -511,16 +562,13 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- LÓGICA COMPLETA: AGENDA, HORÁRIOS, CAIXA, IA, PWA, PUSH   -->
+    <!-- LÓGICA COMPLETA: PLANILHA GOOGLE, HORÁRIOS, CAIXA, IA, PWA-->
     <!-- ========================================================= -->
     <script>
-        // ==========================================
-        // 1. ESTADO E STORAGE COMPATÍVEL COM O CLIENTE
-        // ==========================================
         const DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
         const DEFAULT_SCHEDULE_CONFIG = {
-            workDays: [false, true, true, true, true, true, true], // Seg a Sáb ativo por padrão
+            workDays: [false, true, true, true, true, true, true],
             openTime: '09:00',
             closeTime: '19:00',
             interval: 45,
@@ -534,150 +582,212 @@
         let bookings = [];
         let scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG };
         let manualTransactions = [];
-
-        // ============================================================
-        // COLE SUAS CREDENCIAIS DO ONESIGNAL AQUI DIRETO NO CÓDIGO:
-        // ============================================================
-        const ONESIGNAL_APP_ID = 'SEU_ONESIGNAL_APP_ID_AQUI';
-        const ONESIGNAL_REST_API_KEY = 'SUA_ONESIGNAL_REST_API_KEY_AQUI';
-
-        let oneSignalConfig = {
-            appId: ONESIGNAL_APP_ID,
-            restApiKey: ONESIGNAL_REST_API_KEY,
-            playerId: ''
-        };
+        let knownBookingIds = new Set();
+        let isFirstSync = true;
 
         let currentStatusFilter = 'all';
         let rejectingBookingId = null;
         let deferredInstallPrompt = null;
         let unseenNewBookings = 0;
 
-        // Carrega dados salvos no navegador
-        function loadAllStorageData() {
-            try {
-                const rawBookings = JSON.parse(localStorage.getItem('sb_bookings'));
-                bookings = Array.isArray(rawBookings) ? rawBookings.map(b => ({
-                    ...b,
-                    status: b.status || 'confirmed' // Garante compatibilidade com agendamentos vindos da tela do cliente
-                })) : [];
-            } catch (e) {
-                bookings = [];
-            }
-
-            try {
-                const savedSched = JSON.parse(localStorage.getItem('sb_schedule_config'));
-                if (savedSched && Array.isArray(savedSched.activeSlots)) {
-                    scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG, ...savedSched };
-                }
-            } catch (e) {
-                scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG };
-            }
-
-            try {
-                const savedTx = JSON.parse(localStorage.getItem('sb_transactions'));
-                manualTransactions = Array.isArray(savedTx) ? savedTx : [];
-            } catch (e) {
-                manualTransactions = [];
-            }
-
-            try {
-                const savedPlayerId = localStorage.getItem('sb_onesignal_player_id');
-                if (savedPlayerId) oneSignalConfig.playerId = savedPlayerId;
-            } catch (e) {}
+        function isScriptConfigured() {
+            return typeof GOOGLE_SCRIPT_URL === 'string' &&
+                   GOOGLE_SCRIPT_URL.startsWith('https://script.google.com/');
         }
 
-        function persistBookings() {
-            localStorage.setItem('sb_bookings', JSON.stringify(bookings));
-        }
-
-        function persistScheduleConfig() {
-            localStorage.setItem('sb_schedule_config', JSON.stringify(scheduleConfig));
-            // Também salva a lista simples de horários abertos para leitura direta pelo app do cliente
-            const openOnly = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
-            localStorage.setItem('sb_open_time_slots', JSON.stringify(openOnly));
+        function getLocalDateIso(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         // ==========================================
-        // 2. INICIALIZAÇÃO DO APP E PWA
+        // 1. INICIALIZAÇÃO DO APP E PWA
         // ==========================================
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllStorageData();
-            setupPWAManifestAndServiceWorker();
+        document.addEventListener('DOMContentLoaded', async () => {
+            setupPWAManifestAndIcons();
             initOneSignalSDK();
 
-            // Preenche inputs de configuração de horário
-            document.getElementById('cfg-open-time').value = scheduleConfig.openTime;
-            document.getElementById('cfg-close-time').value = scheduleConfig.closeTime;
-            document.getElementById('cfg-slot-interval').value = String(scheduleConfig.interval);
-            document.getElementById('cfg-lunch-enabled').checked = scheduleConfig.lunchEnabled;
-            document.getElementById('cfg-lunch-start').value = scheduleConfig.lunchStart;
-            document.getElementById('cfg-lunch-end').value = scheduleConfig.lunchEnd;
-
-            // Define mês atual no financeiro
             const now = new Date();
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('finance-month-picker').value = currentMonth;
 
-            renderWorkDaysSelector();
-            renderOwnerSlotsGrid();
+            applyScheduleConfigToUI();
             renderOwnerBookings();
             renderFinanceDashboard();
             runLocalMovementAI();
 
+            if (!isScriptConfigured()) {
+                document.getElementById('missing-url-warning').classList.remove('hidden');
+                setSyncBadge('error', 'Sem URL');
+            } else {
+                await syncAllFromGoogleSheets(false);
+                // Verifica novos agendamentos na planilha a cada 15 segundos
+                setInterval(() => syncAllFromGoogleSheets(false), 15000);
+            }
+
             if (window.lucide) lucide.createIcons();
         });
 
-        // Escuta em tempo real se o cliente marcou horário em outra aba/janela no mesmo dispositivo
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'sb_bookings' && event.newValue) {
-                const previousIds = new Set(bookings.map(b => b.id));
-                loadAllStorageData();
-                const newlyAdded = bookings.filter(b => !previousIds.has(b.id));
+        function applyScheduleConfigToUI() {
+            document.getElementById('cfg-open-time').value = scheduleConfig.openTime || '09:00';
+            document.getElementById('cfg-close-time').value = scheduleConfig.closeTime || '19:00';
+            document.getElementById('cfg-slot-interval').value = String(scheduleConfig.interval || 45);
+            document.getElementById('cfg-lunch-enabled').checked = Boolean(scheduleConfig.lunchEnabled);
+            document.getElementById('cfg-lunch-start').value = scheduleConfig.lunchStart || '12:00';
+            document.getElementById('cfg-lunch-end').value = scheduleConfig.lunchEnd || '13:30';
 
-                if (newlyAdded.length > 0) {
-                    const latest = newlyAdded[0];
-                    handleIncomingClientAlert(latest);
-                }
-                renderOwnerBookings();
-                renderFinanceDashboard();
-                runLocalMovementAI();
+            renderWorkDaysSelector();
+            renderOwnerSlotsGrid();
+        }
+
+        // ==========================================
+        // 2. SINCRONIZAÇÃO COM GOOGLE SHEETS
+        // ==========================================
+        function setSyncBadge(state, text) {
+            const badge = document.getElementById('sheet-sync-badge');
+            badge.textContent = text;
+            if (state === 'ok') {
+                badge.className = 'px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-extrabold text-emerald-400 uppercase shrink-0';
+            } else if (state === 'loading') {
+                badge.className = 'px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-[9px] font-extrabold text-amber-300 uppercase shrink-0 animate-pulse';
+            } else {
+                badge.className = 'px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/30 text-[9px] font-extrabold text-red-400 uppercase shrink-0';
             }
-        });
+        }
+
+        async function syncAllFromGoogleSheets(manualNotify = false) {
+            if (!isScriptConfigured()) return;
+
+            setSyncBadge('loading', 'Sync...');
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?t=${Date.now()}`);
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    const incomingBookings = Array.isArray(data.bookings) ? data.bookings : [];
+
+                    // Detecta novos agendamentos feitos por clientes para tocar alerta sonoro e vibrar
+                    if (!isFirstSync) {
+                        incomingBookings.forEach(b => {
+                            if (!knownBookingIds.has(b.id) && b.status !== 'rejected') {
+                                handleIncomingClientAlert(b);
+                            }
+                        });
+                    }
+
+                    bookings = incomingBookings;
+                    knownBookingIds = new Set(bookings.map(b => b.id));
+                    isFirstSync = false;
+
+                    if (data.scheduleConfig) {
+                        scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG, ...data.scheduleConfig };
+                        applyScheduleConfigToUI();
+                    }
+
+                    if (Array.isArray(data.transactions)) {
+                        manualTransactions = data.transactions;
+                    }
+
+                    renderOwnerBookings();
+                    renderFinanceDashboard();
+                    runLocalMovementAI();
+                    setSyncBadge('ok', 'Online');
+
+                    if (manualNotify) {
+                        showToastBanner('Planilha Sincronizada', 'Agenda, horários e caixa atualizados.');
+                    }
+                } else {
+                    setSyncBadge('error', 'Erro');
+                }
+            } catch (err) {
+                setSyncBadge('error', 'Offline');
+            }
+        }
+
+        async function postToGoogleSheets(payload) {
+            if (!isScriptConfigured()) {
+                showToastBanner('Erro', 'Cole a URL do Apps Script no topo do HTML.');
+                return { status: 'error' };
+            }
+
+            setSyncBadge('loading', 'Salvando...');
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                setSyncBadge(res.status === 'ok' ? 'ok' : 'error', res.status === 'ok' ? 'Online' : 'Erro');
+                return res;
+            } catch (err) {
+                setSyncBadge('error', 'Offline');
+                return { status: 'error', message: err.toString() };
+            }
+        }
 
         // ==========================================
-        // 3. CONFIGURAÇÃO PWA (MANIFEST + SERVICE WORKER)
+        // 3. PWA: ÍCONE PNG NATIVO + TELA INICIAL
         // ==========================================
-        function setupPWAManifestAndServiceWorker() {
+        function generatePngIconDataUrl(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Fundo escuro arredondado
+            ctx.fillStyle = '#09090B';
+            ctx.fillRect(0, 0, size, size);
+
+            // Borda dourada interna
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = Math.max(4, size * 0.04);
+            ctx.strokeRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
+
+            // Texto SB
+            ctx.fillStyle = '#FBBF24';
+            ctx.font = `800 ${Math.floor(size * 0.36)}px Inter, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('SB', size / 2, size / 2);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function setupPWAManifestAndIcons() {
             try {
-                const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#09090B"/><circle cx="256" cy="256" r="180" fill="#FBBF24" fill-opacity="0.15"/><path d="M170 160 L342 352 M342 160 L170 352" stroke="#FBBF24" stroke-width="36" stroke-linecap="round"/><circle cx="170" cy="160" r="34" fill="none" stroke="#FBBF24" stroke-width="24"/><circle cx="342" cy="160" r="34" fill="none" stroke="#FBBF24" stroke-width="24"/></svg>`;
-                const iconDataUrl = 'data:image/svg+xml;base64,' + btoa(svgIcon);
+                const icon192 = generatePngIconDataUrl(192);
+                const icon512 = generatePngIconDataUrl(512);
+
+                document.getElementById('apple-touch-icon-link').setAttribute('href', icon192);
 
                 const manifestObj = {
                     name: 'Secreta Barber - Proprietário',
                     short_name: 'Secreta Admin',
-                    description: 'Painel do Proprietário: Agenda, Horários, Contabilidade e IA de Movimento.',
-                    start_url: window.location.href,
+                    description: 'Painel de Gestão da Secreta Barber',
+                    start_url: window.location.href.split('#')[0],
                     display: 'standalone',
                     orientation: 'portrait',
                     background_color: '#09090B',
                     theme_color: '#09090B',
                     icons: [
-                        { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-                        { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+                        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
                     ]
                 };
 
                 const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-                const manifestUrl = URL.createObjectURL(manifestBlob);
-                document.getElementById('pwa-manifest-link').setAttribute('href', manifestUrl);
+                document.getElementById('pwa-manifest-link').setAttribute('href', URL.createObjectURL(manifestBlob));
 
-                // Registra Service Worker leve via Blob se suportado
+                // Service Worker necessário para o Chrome liberar o banner nativo de instalação PWA
                 if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
                     const swCode = `
                         self.addEventListener('install', (e) => self.skipWaiting());
                         self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
                         self.addEventListener('fetch', (e) => {
-                            e.respondWith(fetch(e.request).catch(() => new Response('Modo Offline Ativo - Secreta Barber')));
+                            e.respondWith(fetch(e.request).catch(() => new Response('Offline')));
                         });
                     `;
                     const swBlob = new Blob([swCode], { type: 'application/javascript' });
@@ -685,7 +795,11 @@
                 }
             } catch (e) {}
 
-            // Captura prompt de instalação nativa no Android/Chrome
+            // Se já estiver rodando instalado na tela inicial (standalone), esconde o botão Instalar
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                document.getElementById('btn-install-pwa').classList.add('hidden');
+            }
+
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredInstallPrompt = e;
@@ -694,129 +808,73 @@
         }
 
         async function triggerPwaInstall() {
-            if (!deferredInstallPrompt) {
-                showToastBanner('Instalar no Celular', 'Abra o menu do navegador e toque em "Adicionar à tela inicial".');
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('btn-install-pwa').classList.add('hidden');
+                }
+                deferredInstallPrompt = null;
                 return;
             }
-            deferredInstallPrompt.prompt();
-            const { outcome } = await deferredInstallPrompt.userChoice;
-            if (outcome === 'accepted') {
-                document.getElementById('btn-install-pwa').classList.add('hidden');
-            }
-            deferredInstallPrompt = null;
+            // Abre guia visual para iPhone/Safari ou Chrome quando o prompt automático não disparou
+            const modal = document.getElementById('pwa-install-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePwaModal() {
+            const modal = document.getElementById('pwa-install-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         // ==========================================
         // 4. INTEGRAÇÃO ONESIGNAL PUSH NOTIFICATIONS
         // ==========================================
-        function hasValidOneSignalCredentials() {
-            return oneSignalConfig.appId &&
-                oneSignalConfig.appId !== 'SEU_ONESIGNAL_APP_ID_AQUI' &&
-                oneSignalConfig.appId.length > 10;
-        }
-
         function initOneSignalSDK() {
             const statusDot = document.getElementById('onesignal-header-dot');
             const statusText = document.getElementById('onesignal-header-status');
             const btnPush = document.getElementById('btn-enable-push');
 
-            if (!hasValidOneSignalCredentials()) {
-                statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0';
-                statusText.textContent = 'Push OneSignal: Insira App ID no código';
-                return;
-            }
-
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             OneSignalDeferred.push(async function(OneSignal) {
                 try {
                     await OneSignal.init({
-                        appId: oneSignalConfig.appId,
+                        appId: ONESIGNAL_APP_ID,
                         allowLocalhostAsSecureOrigin: true,
                         notifyButton: { enable: false }
                     });
 
                     const isOptedIn = OneSignal.User.PushSubscription.optedIn;
-                    const subId = OneSignal.User.PushSubscription.id;
-
-                    if (subId) {
-                        oneSignalConfig.playerId = subId;
-                        localStorage.setItem('sb_onesignal_player_id', subId);
-                    }
-
                     if (isOptedIn) {
                         statusDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0';
-                        statusText.textContent = 'Push OneSignal: Conectado';
+                        statusText.textContent = 'Push: Ativo neste celular';
                         if (btnPush) btnPush.classList.add('hidden');
                     } else {
                         statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0';
-                        statusText.textContent = 'Push OneSignal: Toque em Ativar Push';
+                        statusText.textContent = 'Push: Toque no sino';
                     }
                 } catch (err) {
-                    statusDot.className = 'w-1.5 h-1.5 rounded-full bg-red-500 inline-block shrink-0';
-                    statusText.textContent = 'Push OneSignal: Erro no App ID';
+                    statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0';
+                    statusText.textContent = 'Push: Pronto';
                 }
             });
         }
 
         async function requestOneSignalPermission() {
-            if (!hasValidOneSignalCredentials()) {
-                if ('Notification' in window) {
-                    const perm = await Notification.requestPermission();
-                    if (perm === 'granted') {
-                        showToastBanner('Permissão Local Concedida', 'Coloque seu ONESIGNAL_APP_ID no código para push externo.');
-                    }
-                }
-                return;
-            }
-
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.Notifications.requestPermission();
-                const subId = OneSignal.User.PushSubscription.id;
-                if (subId) {
-                    oneSignalConfig.playerId = subId;
-                    localStorage.setItem('sb_onesignal_player_id', subId);
+                try {
+                    await OneSignal.Notifications.requestPermission();
+                    initOneSignalSDK();
+                    showToastBanner('Notificações Ativadas!', 'Você receberá alertas no celular quando um cliente agendar.');
+                } catch (e) {
+                    if ('Notification' in window) {
+                        await Notification.requestPermission();
+                    }
                 }
-                initOneSignalSDK();
-                showToastBanner('OneSignal Ativado!', 'Você receberá notificações de novos agendamentos.');
             });
-        }
-
-        // Dispara push real pela REST API do OneSignal quando um cliente marca horário
-        async function dispatchOneSignalPushNotification(booking) {
-            if (!hasValidOneSignalCredentials() || !oneSignalConfig.restApiKey || oneSignalConfig.restApiKey === 'SUA_ONESIGNAL_REST_API_KEY_AQUI') {
-                return false;
-            }
-
-            const payload = {
-                app_id: oneSignalConfig.appId,
-                headings: { en: 'Novo Agendamento - Secreta Barber', pt: 'Novo Agendamento - Secreta Barber' },
-                contents: {
-                    en: `${booking.clientName} marcou ${booking.serviceName} (${booking.dateDisplay} às ${booking.time})`,
-                    pt: `${booking.clientName} marcou ${booking.serviceName} (${booking.dateDisplay} às ${booking.time})`
-                },
-                chrome_web_badge: 'https://placehold.co/96x96/09090B/FBBF24?text=SB'
-            };
-
-            if (oneSignalConfig.playerId) {
-                payload.include_subscription_ids = [oneSignalConfig.playerId];
-            } else {
-                payload.included_segments = ['Subscribed Users'];
-            }
-
-            try {
-                const res = await fetch('https://onesignal.com/api/v1/notifications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'Authorization': `Basic ${oneSignalConfig.restApiKey}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-                return res.ok;
-            } catch (e) {
-                return false;
-            }
         }
 
         // ==========================================
@@ -862,11 +920,9 @@
             currentStatusFilter = status;
             ['all', 'confirmed', 'completed', 'rejected'].forEach(st => {
                 const btn = document.getElementById(`filter-status-${st}`);
-                if (st === status) {
-                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0';
-                } else {
-                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0';
-                }
+                btn.className = (st === status)
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0';
             });
             renderOwnerBookings();
         }
@@ -891,16 +947,14 @@
         function renderOwnerBookings() {
             const container = document.getElementById('owner-bookings-container');
             const dateFilter = document.getElementById('agenda-date-filter').value;
-            const todayIso = new Date().toISOString().split('T')[0];
+            const todayIso = getLocalDateIso(new Date());
 
-            // Atualiza cards do topo
             const todayActive = bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected');
             const todayRevenue = todayActive.reduce((acc, b) => acc + parseBrazilianPrice(b.servicePrice), 0);
             document.getElementById('stat-today-count').textContent = todayActive.length;
             document.getElementById('stat-today-revenue').textContent = formatBRL(todayRevenue);
             document.getElementById('stat-closing-time').textContent = scheduleConfig.closeTime;
 
-            // Filtra lista
             const filtered = bookings.filter(b => {
                 const matchDate = !dateFilter || b.dateIso === dateFilter;
                 const matchStatus = currentStatusFilter === 'all' || b.status === currentStatusFilter;
@@ -912,7 +966,7 @@
                     <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-6 text-center space-y-2">
                         <i data-lucide="calendar-off" class="w-8 h-8 text-zinc-600 mx-auto"></i>
                         <p class="text-sm font-semibold text-zinc-300">Nenhum horário encontrado</p>
-                        <p class="text-xs text-zinc-500">Quando um cliente agendar, aparecerá aqui automaticamente.</p>
+                        <p class="text-xs text-zinc-500">Os agendamentos da Planilha Google aparecem aqui.</p>
                     </div>
                 `;
                 if (window.lucide) lucide.createIcons();
@@ -930,6 +984,9 @@
                     badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">Rejeitado</span>`;
                 }
 
+                const cleanPhone = String(b.clientPhone || '').replace(/\D/g, '');
+                const waClientNumber = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+
                 return `
                     <div class="bg-obsidian-900 border ${isRejected ? 'border-red-500/30 opacity-75' : isCompleted ? 'border-emerald-500/30' : 'border-zinc-800'} rounded-2xl p-4 space-y-3">
                         <div class="flex items-center justify-between gap-2">
@@ -942,18 +999,18 @@
 
                         <div class="space-y-1">
                             <div class="flex items-center justify-between gap-2">
-                                <p class="text-sm font-bold text-white">${b.clientName}</p>
-                                <span class="text-xs font-extrabold text-emerald-400">${b.servicePrice}</span>
+                                <p class="text-sm font-bold text-white break-words">${b.clientName}</p>
+                                <span class="text-xs font-extrabold text-emerald-400 shrink-0">${b.servicePrice}</span>
                             </div>
-                            <p class="text-xs text-zinc-300">${b.serviceName} • <span class="text-amber-400">Ref: ${b.cutStyle}</span></p>
+                            <p class="text-xs text-zinc-300 break-words">${b.serviceName} • <span class="text-amber-400">Ref: ${b.cutStyle}</span></p>
                             <p class="text-[11px] text-zinc-400">WhatsApp: ${b.clientPhone}</p>
-                            ${b.notes && b.notes !== 'Nenhuma' ? `<p class="text-[11px] text-zinc-400 italic bg-obsidian-950 p-2 rounded-lg border border-zinc-800/80">"${b.notes}"</p>` : ''}
-                            ${isRejected && b.rejectReason ? `<p class="text-[11px] text-red-400">Motivo: ${b.rejectReason}</p>` : ''}
+                            ${b.notes && b.notes !== 'Nenhuma' ? `<p class="text-[11px] text-zinc-400 italic bg-obsidian-950 p-2 rounded-lg border border-zinc-800/80 break-words">"${b.notes}"</p>` : ''}
+                            ${isRejected && b.rejectReason ? `<p class="text-[11px] text-red-400 break-words">Motivo: ${b.rejectReason}</p>` : ''}
                         </div>
 
                         <!-- Ações do Proprietário -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80">
-                            <a href="https://wa.me/${b.clientPhone.replace(/\D/g, '')}" target="_blank" rel="noopener noreferrer"
+                            <a href="https://wa.me/${waClientNumber}" target="_blank" rel="noopener noreferrer"
                                 class="px-3 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 text-xs font-semibold flex items-center gap-1.5 transition">
                                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
                                 <span>WhatsApp</span>
@@ -986,15 +1043,19 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        function markBookingCompleted(id) {
+        async function markBookingCompleted(id) {
             const idx = bookings.findIndex(b => b.id === id);
             if (idx === -1) return;
             bookings[idx].status = 'completed';
-            persistBookings();
             renderOwnerBookings();
             renderFinanceDashboard();
-            runLocalMovementAI();
-            showToastBanner('Atendimento Concluído!', `Valor de ${bookings[idx].servicePrice} somado ao faturamento.`);
+
+            await postToGoogleSheets({
+                action: 'updateBookingStatus',
+                id: id,
+                status: 'completed'
+            });
+            showToastBanner('Atendimento Concluído!', `Valor de ${bookings[idx].servicePrice} confirmado.`);
         }
 
         function openRejectModal(id) {
@@ -1017,7 +1078,7 @@
             modal.classList.remove('flex');
         }
 
-        function confirmRejectBooking(sendWhatsApp) {
+        async function confirmRejectBooking(sendWhatsApp) {
             if (!rejectingBookingId) return;
             const idx = bookings.findIndex(b => b.id === rejectingBookingId);
             if (idx === -1) return;
@@ -1030,13 +1091,19 @@
             bookings[idx].rejectReason = finalReason;
             const rejectedBooking = bookings[idx];
 
-            persistBookings();
             closeRejectModal();
             renderOwnerBookings();
             renderFinanceDashboard();
             runLocalMovementAI();
 
-            showToastBanner('Horário Rejeitado', `O horário das ${rejectedBooking.time} foi liberado na agenda.`);
+            await postToGoogleSheets({
+                action: 'updateBookingStatus',
+                id: rejectedBooking.id,
+                status: 'rejected',
+                rejectReason: finalReason
+            });
+
+            showToastBanner('Horário Rejeitado', `Horário das ${rejectedBooking.time} liberado na planilha.`);
 
             if (sendWhatsApp) {
                 const cleanClientPhone = rejectedBooking.clientPhone.replace(/\D/g, '');
@@ -1046,15 +1113,15 @@
             }
         }
 
-        function deleteBookingPermanent(id) {
+        async function deleteBookingPermanent(id) {
             bookings = bookings.filter(b => b.id !== id);
-            persistBookings();
             renderOwnerBookings();
             renderFinanceDashboard();
+            await postToGoogleSheets({ action: 'removeBooking', id });
         }
 
         // ==========================================
-        // 7. GESTÃO DE HORÁRIOS DE TRABALHO
+        // 7. GESTÃO DE HORÁRIOS NA PLANILHA GOOGLE
         // ==========================================
         function renderWorkDaysSelector() {
             const container = document.getElementById('work-days-grid');
@@ -1062,7 +1129,7 @@
                 const active = scheduleConfig.workDays[idx];
                 return `
                     <button type="button" onclick="toggleWorkDay(${idx})"
-                        class="py-2.5 rounded-xl border text-xs font-bold transition ${active ? 'bg-amber-500 border-amber-500 text-black' : 'bg-obsidian-950 border-zinc-800 text-zinc-500'}">
+                        class="py-2.5 rounded-xl border text-[11px] font-bold transition ${active ? 'bg-amber-500 border-amber-500 text-black' : 'bg-obsidian-950 border-zinc-800 text-zinc-500'}">
                         ${label}
                     </button>
                 `;
@@ -1071,7 +1138,6 @@
 
         function toggleWorkDay(dayIndex) {
             scheduleConfig.workDays[dayIndex] = !scheduleConfig.workDays[dayIndex];
-            persistScheduleConfig();
             renderWorkDaysSelector();
         }
 
@@ -1086,7 +1152,7 @@
             return `${h}:${m}`;
         }
 
-        function saveAndGenerateSchedule() {
+        async function saveAndGenerateSchedule() {
             const openTime = document.getElementById('cfg-open-time').value || '09:00';
             const closeTime = document.getElementById('cfg-close-time').value || '19:00';
             const interval = parseInt(document.getElementById('cfg-slot-interval').value, 10) || 45;
@@ -1119,22 +1185,65 @@
             scheduleConfig.lunchStart = lunchStart;
             scheduleConfig.lunchEnd = lunchEnd;
             scheduleConfig.activeSlots = generated;
-            scheduleConfig.disabledSlots = scheduleConfig.disabledSlots.filter(s => generated.includes(s));
+            scheduleConfig.disabledSlots = (scheduleConfig.disabledSlots || []).filter(s => generated.includes(s));
 
-            persistScheduleConfig();
             renderOwnerSlotsGrid();
             renderOwnerBookings();
             runLocalMovementAI();
-            showToastBanner('Expediente Atualizado!', `Atendimento configurado de ${openTime} até ${closeTime}.`);
+
+            const btn = document.getElementById('btn-save-schedule');
+            btn.disabled = true;
+            btn.textContent = 'Salvando na Planilha...';
+
+            const res = await postToGoogleSheets({
+                action: 'saveScheduleConfig',
+                scheduleConfig: scheduleConfig
+            });
+
+            btn.disabled = false;
+            btn.textContent = 'Salvar Grade na Planilha Google';
+
+            if (res.status === 'ok') {
+                showToastBanner('Grade Salva!', `Horários de ${openTime} às ${closeTime} atualizados na planilha.`);
+            }
+        }
+
+        async function handleAddCustomSlot(e) {
+            e.preventDefault();
+            const input = document.getElementById('custom-extra-slot');
+            const newTime = input.value.trim();
+            if (!newTime) return;
+
+            if (!scheduleConfig.activeSlots.includes(newTime)) {
+                scheduleConfig.activeSlots.push(newTime);
+                scheduleConfig.activeSlots.sort();
+            }
+            scheduleConfig.disabledSlots = (scheduleConfig.disabledSlots || []).filter(s => s !== newTime);
+
+            input.value = '';
+            renderOwnerSlotsGrid();
+            runLocalMovementAI();
+
+            const res = await postToGoogleSheets({
+                action: 'addCustomTimeSlot',
+                time: newTime
+            });
+
+            if (res.status === 'ok') {
+                showToastBanner('Horário Adicionado!', `O horário ${newTime} já está disponível para clientes.`);
+            }
         }
 
         function renderOwnerSlotsGrid() {
             const grid = document.getElementById('owner-slots-toggle-grid');
-            const openCount = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s)).length;
-            document.getElementById('active-slots-badge').textContent = `${openCount} de ${scheduleConfig.activeSlots.length} abertos`;
+            const slots = scheduleConfig.activeSlots || [];
+            const disabled = scheduleConfig.disabledSlots || [];
+            const openCount = slots.filter(s => !disabled.includes(s)).length;
 
-            grid.innerHTML = scheduleConfig.activeSlots.map(slot => {
-                const isDisabled = scheduleConfig.disabledSlots.includes(slot);
+            document.getElementById('active-slots-badge').textContent = `${openCount} de ${slots.length} abertos`;
+
+            grid.innerHTML = slots.map(slot => {
+                const isDisabled = disabled.includes(slot);
                 return `
                     <button type="button" onclick="toggleSingleTimeSlot('${slot}')"
                         class="py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${isDisabled ? 'bg-obsidian-950 border-zinc-800 text-zinc-500 line-through' : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'}">
@@ -1146,34 +1255,39 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        function toggleSingleTimeSlot(slot) {
-            if (scheduleConfig.disabledSlots.includes(slot)) {
+        async function toggleSingleTimeSlot(slot) {
+            const currentlyDisabled = (scheduleConfig.disabledSlots || []).includes(slot);
+            if (currentlyDisabled) {
                 scheduleConfig.disabledSlots = scheduleConfig.disabledSlots.filter(s => s !== slot);
             } else {
                 scheduleConfig.disabledSlots.push(slot);
             }
-            persistScheduleConfig();
+
             renderOwnerSlotsGrid();
             runLocalMovementAI();
+
+            await postToGoogleSheets({
+                action: 'toggleTimeSlot',
+                time: slot,
+                isOpen: currentlyDisabled // Se estava bloqueado, agora abre (true)
+            });
         }
 
         // ==========================================
         // 8. CONTABILIDADE, FATURAMENTO MENSAL E LUCRO
         // ==========================================
         function renderFinanceDashboard() {
-            const selectedMonth = document.getElementById('finance-month-picker').value; // YYYY-MM
+            const selectedMonth = document.getElementById('finance-month-picker').value;
 
-            // Considera agendamentos do mês escolhido que não foram rejeitados
             const monthBookings = bookings.filter(b =>
                 b.dateIso && b.dateIso.startsWith(selectedMonth) && b.status !== 'rejected'
             );
 
             const servicesRevenue = monthBookings.reduce((sum, b) => sum + parseBrazilianPrice(b.servicePrice), 0);
 
-            // Lançamentos manuais do mês
             const monthTx = manualTransactions.filter(tx => tx.month === selectedMonth);
-            const extraIncome = monthTx.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
-            const totalExpenses = monthTx.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+            const extraIncome = monthTx.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0);
+            const totalExpenses = monthTx.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0);
 
             const grossRevenue = servicesRevenue + extraIncome;
             const netProfit = grossRevenue - totalExpenses;
@@ -1191,7 +1305,6 @@
             document.getElementById('fin-profit-margin').textContent = `${profitMargin}% margem`;
             document.getElementById('fin-avg-ticket').textContent = `Ticket médio: ${formatBRL(avgTicket)}`;
 
-            // Quebra por serviço
             const breakdownEl = document.getElementById('fin-services-breakdown');
             const serviceMap = {};
             monthBookings.forEach(b => {
@@ -1207,7 +1320,7 @@
                     const pct = servicesRevenue > 0 ? Math.round((total / servicesRevenue) * 100) : 0;
                     return `
                         <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
+                            <div class="flex justify-between text-xs gap-2">
                                 <span class="text-zinc-200 font-medium truncate">${srvName}</span>
                                 <span class="text-amber-400 font-bold shrink-0">${formatBRL(total)} (${pct}%)</span>
                             </div>
@@ -1219,7 +1332,6 @@
                 }).join('');
             }
 
-            // Lista de lançamentos manuais
             const txListEl = document.getElementById('fin-transactions-list');
             if (monthTx.length === 0) {
                 txListEl.innerHTML = `<p class="text-xs text-zinc-500 text-center py-2">Nenhuma despesa ou venda extra lançada neste mês.</p>`;
@@ -1232,7 +1344,7 @@
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'}">
-                                ${tx.type === 'income' ? '+' : '-'} ${formatBRL(tx.amount)}
+                                ${tx.type === 'income' ? '+' : '-'} ${formatBRL(Number(tx.amount))}
                             </span>
                             <button type="button" onclick="deleteTransaction('${tx.id}')" class="text-zinc-500 hover:text-red-400">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -1245,7 +1357,7 @@
             if (window.lucide) lucide.createIcons();
         }
 
-        function handleAddTransaction(e) {
+        async function handleAddTransaction(e) {
             e.preventDefault();
             const type = document.getElementById('tx-type').value;
             const desc = document.getElementById('tx-desc').value.trim();
@@ -1254,38 +1366,43 @@
 
             if (!desc || isNaN(amount) || amount <= 0) return;
 
-            manualTransactions.unshift({
+            const newTx = {
                 id: 'tx_' + Date.now(),
                 type,
                 desc,
                 amount,
                 month: selectedMonth,
                 date: new Date().toLocaleDateString('pt-BR')
-            });
-            localStorage.setItem('sb_transactions', JSON.stringify(manualTransactions));
+            };
+
+            manualTransactions.unshift(newTx);
             e.target.reset();
             renderFinanceDashboard();
-            showToastBanner('Lançamento Registrado', `${type === 'income' ? 'Receita' : 'Despesa'} de ${formatBRL(amount)} salva.`);
+
+            await postToGoogleSheets({
+                action: 'addTransaction',
+                transaction: newTx
+            });
+            showToastBanner('Lançamento Salvo', `${type === 'income' ? 'Receita' : 'Despesa'} de ${formatBRL(amount)} registrada na planilha.`);
         }
 
-        function deleteTransaction(id) {
+        async function deleteTransaction(id) {
             manualTransactions = manualTransactions.filter(t => t.id !== id);
-            localStorage.setItem('sb_transactions', JSON.stringify(manualTransactions));
             renderFinanceDashboard();
+            await postToGoogleSheets({ action: 'deleteTransaction', id });
         }
 
         // ==========================================
-        // 9. IA LOCAL DE MOVIMENTO (MOTOR HEURÍSTICO)
+        // 9. IA LOCAL DE MOVIMENTO
         // ==========================================
         function runLocalMovementAI() {
-            const todayIso = new Date().toISOString().split('T')[0];
-            const openSlots = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
+            const todayIso = getLocalDateIso(new Date());
+            const openSlots = (scheduleConfig.activeSlots || []).filter(s => !(scheduleConfig.disabledSlots || []).includes(s));
             const totalCapacityToday = Math.max(openSlots.length, 1);
 
             const validBookings = bookings.filter(b => b.status !== 'rejected');
             const todayBookings = validBookings.filter(b => b.dateIso === todayIso);
 
-            // 1) Taxa de ocupação de hoje
             const occupancyPct = Math.min(100, Math.round((todayBookings.length / totalCapacityToday) * 100));
             const occBar = document.getElementById('ai-occupancy-bar');
             const occBadge = document.getElementById('ai-occupancy-badge');
@@ -1297,20 +1414,19 @@
                 occBar.className = 'h-full bg-emerald-500 transition-all duration-500';
                 occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400';
                 occBadge.textContent = `Alta Demanda (${occupancyPct}%)`;
-                occSummary.textContent = `Hoje você tem ${todayBookings.length} de ${totalCapacityToday} horários ocupados. Movimento forte: considere estender o fechamento após às ${scheduleConfig.closeTime} se houver procura.`;
+                occSummary.textContent = `Hoje você tem ${todayBookings.length} de ${totalCapacityToday} horários ocupados. Movimento forte!`;
             } else if (occupancyPct >= 35) {
                 occBar.className = 'h-full bg-amber-500 transition-all duration-500';
                 occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400';
-                occBadge.textContent = `Movimento Moderado (${occupancyPct}%)`;
-                occSummary.textContent = `Você preencheu ${todayBookings.length} de ${totalCapacityToday} horários hoje. Ainda restam ${totalCapacityToday - todayBookings.length} vagas livres para encaixe rápido.`;
+                occBadge.textContent = `Moderado (${occupancyPct}%)`;
+                occSummary.textContent = `Você preencheu ${todayBookings.length} de ${totalCapacityToday} horários hoje. Restam ${totalCapacityToday - todayBookings.length} vagas livres.`;
             } else {
                 occBar.className = 'h-full bg-sky-500 transition-all duration-500';
                 occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-sky-500/20 text-sky-400';
-                occBadge.textContent = `Movimento Calmo (${occupancyPct}%)`;
-                occSummary.textContent = `Apenas ${todayBookings.length} de ${totalCapacityToday} horários ocupados hoje. Ótimo momento para divulgar vagas livres nos status do WhatsApp.`;
+                occBadge.textContent = `Calmo (${occupancyPct}%)`;
+                occSummary.textContent = `${todayBookings.length} de ${totalCapacityToday} horários ocupados hoje. Divulgue os horários livres nos Status do WhatsApp.`;
             }
 
-            // 2) Mapa de calor por horário (histórico acumulado + peso padrão de barbearia)
             const slotCounts = {};
             openSlots.forEach(s => slotCounts[s] = 0);
             validBookings.forEach(b => {
@@ -1325,7 +1441,6 @@
             heatmapEl.innerHTML = openSlots.map(slot => {
                 const count = slotCounts[slot] || 0;
                 const hourNum = parseInt(slot.split(':')[0], 10);
-                // Peso base estatístico de barbearias (final da tarde tende a ter maior procura)
                 const naturalWeight = (hourNum >= 17 || hourNum === 10 || hourNum === 11) ? 1 : 0;
                 const score = count + naturalWeight;
 
@@ -1347,23 +1462,20 @@
                 `;
             }).join('');
 
-            // 3) Regras de Recomendações Inteligentes
             const recommendations = [];
-
-            // Regra A: Horários ociosos hoje
             const bookedTodaySet = new Set(todayBookings.map(b => b.time));
             const freeToday = openSlots.filter(s => !bookedTodaySet.has(s));
+
             if (freeToday.length > 0) {
                 const sampleFree = freeToday.slice(0, 3).join(', ');
                 recommendations.push({
                     icon: 'sparkles',
                     color: 'text-amber-400',
-                    title: 'Vagas Livres para Divulgação Imediata',
-                    desc: `Você tem ${freeToday.length} horários livres hoje (ex: ${sampleFree}). Poste nos Status do WhatsApp para preencher a agenda.`
+                    title: 'Vagas Livres Hoje',
+                    desc: `Você tem ${freeToday.length} horários livres hoje (ex: ${sampleFree}). Poste nos Status do WhatsApp para preencher.`
                 });
             }
 
-            // Regra B: Serviço carro-chefe
             const srvFreq = {};
             validBookings.forEach(b => srvFreq[b.serviceName] = (srvFreq[b.serviceName] || 0) + 1);
             const topSrv = Object.entries(srvFreq).sort((a, b) => b[1] - a[1])[0];
@@ -1371,26 +1483,8 @@
                 recommendations.push({
                     icon: 'award',
                     color: 'text-emerald-400',
-                    title: `Serviço Mais Pedido: ${topSrv[0]}`,
-                    desc: `Representa a maior procura da barbearia (${topSrv[1]} agendamentos). Mantenha insumos deste serviço sempre em estoque.`
-                });
-            }
-
-            // Regra C: Horário de maior pico
-            const peakEntry = Object.entries(slotCounts).sort((a, b) => b[1] - a[1])[0];
-            if (peakEntry && peakEntry[1] > 0) {
-                recommendations.push({
-                    icon: 'trending-up',
-                    color: 'text-amber-400',
-                    title: `Horário de Pico às ${peakEntry[0]}`,
-                    desc: `O horário das ${peakEntry[0]} é o mais disputado pelos clientes. Evite marcar pausas pessoais perto dessa faixa.`
-                });
-            } else {
-                recommendations.push({
-                    icon: 'info',
-                    color: 'text-sky-400',
-                    title: 'Aprendizado Contínuo Ativo',
-                    desc: 'A IA local ajusta automaticamente os horários de pico conforme novos clientes marcam horários na Secreta Barber.'
+                    title: `Carro-Chefe: ${topSrv[0]}`,
+                    desc: `Serviço mais agendado (${topSrv[1]} vezes). Mantenha insumos sempre prontos.`
                 });
             }
 
@@ -1409,7 +1503,7 @@
         }
 
         // ==========================================
-        // 10. ALERTAS SONOROS, SIMULAÇÃO E TOAST
+        // 10. ALERTAS SONOROS E TOAST
         // ==========================================
         async function playOwnerChime() {
             try {
@@ -1438,41 +1532,6 @@
                 `Novo Horário: ${booking.clientName} (${booking.time})`,
                 `${booking.serviceName} • ${booking.dateDisplay}`
             );
-
-            // Dispara push via OneSignal se configurado
-            dispatchOneSignalPushNotification(booking);
-        }
-
-        function simulateNewClientBooking() {
-            const todayIso = new Date().toISOString().split('T')[0];
-            const openSlots = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
-            const bookedToday = new Set(bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected').map(b => b.time));
-            const freeSlot = openSlots.find(s => !bookedToday.has(s)) || openSlots[0] || '16:30';
-
-            const demoNames = ['Gabriel Alves', 'Matheus Costa', 'Rafael Oliveira', 'Pedro Henrique'];
-            const randomName = demoNames[Math.floor(Math.random() * demoNames.length)];
-
-            const newBooking = {
-                id: 'bk_' + Date.now(),
-                clientName: randomName,
-                clientPhone: '(62) 99911-2233',
-                serviceName: 'Corte + Barba Completa',
-                servicePrice: 'R$ 55,00',
-                dateIso: todayIso,
-                dateDisplay: 'Hoje',
-                time: freeSlot,
-                cutStyle: 'Mid Fade Navalhado',
-                notes: 'Agendamento recebido pelo app do cliente',
-                status: 'confirmed',
-                createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            bookings.unshift(newBooking);
-            persistBookings();
-            handleIncomingClientAlert(newBooking);
-            renderOwnerBookings();
-            renderFinanceDashboard();
-            runLocalMovementAI();
         }
 
         function showToastBanner(title, desc) {
