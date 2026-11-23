@@ -1,1345 +1,1496 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="robots" content="noindex, nofollow">
-    <title>SolarInvest & FlowNest (IA) • Hub 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secreta Barber | Painel do Proprietário (PWA)</title>
 
-    <!-- Configurações PWA -->
-    <meta name="theme-color" content="#050814">
-    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Meta Tags PWA para Android & iOS -->
+    <meta name="theme-color" content="#09090B">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Solar & FlowNest">
+    <meta name="apple-mobile-web-app-title" content="Secreta Admin">
+    <meta name="description" content="Painel de Gestão, Agenda, Contabilidade e IA de Movimento - Secreta Barber">
+
+    <!-- Manifest PWA dinâmico será injetado via JS -->
+    <link id="pwa-manifest-link" rel="manifest" href="">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Inter Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- QRious (Gerador de QR Code PIX) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    <!-- MapLibre GL CSS & JS -->
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <!-- Fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tone.js para alerta sonoro nativo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- OneSignal Web Push SDK v16 -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
                     colors: {
-                        'solar-bg': '#050814',
-                        'solar-neon': '#39ff4d',
-                        'solar-gold': '#fbbf24'
+                        obsidian: {
+                            950: '#09090B',
+                            900: '#121215',
+                            800: '#1C1C21',
+                            700: '#27272E',
+                        }
                     }
                 }
             }
         }
     </script>
-
     <style>
-        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
         html, body {
-            touch-action: manipulation;
-            min-height: 100%;
-            background-color: #050814;
-            color: #ffffff;
+            max-width: 100%;
             overflow-x: hidden;
+            background-color: #09090B;
+            color: #F4F4F5;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom);
         }
-        .tabular-nums { font-variant-numeric: tabular-nums; }
-
-        .page-ambient-bg {
-            position: fixed;
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121215;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272E;
+            border-radius: 9999px;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.85); opacity: 0.85; }
+            100% { transform: scale(1.55); opacity: 0; }
+        }
+        .animate-ring::before {
+            content: '';
+            position: absolute;
             inset: 0;
-            background:
-                radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.18) 0%, transparent 50%),
-                linear-gradient(180deg, #090e24 0%, #050814 60%, #040711 100%);
-            pointer-events: none;
-            z-index: 0;
+            border-radius: 9999px;
+            border: 2px solid #FBBF24;
+            animation: pulse-ring 1.8s infinite;
         }
-
-        .hero-profit-box {
-            position: relative;
-            border-radius: 24px;
-            background: linear-gradient(135deg, rgba(22, 32, 58, 0.92) 0%, rgba(11, 18, 36, 0.96) 55%, rgba(12, 38, 34, 0.92) 100%);
-            border: 1px solid rgba(57, 255, 77, 0.35);
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
-        }
-
-        .bolt-orb {
-            background: radial-gradient(circle at 35% 30%, rgba(57, 255, 77, 0.25), rgba(16, 185, 129, 0.06));
-            border: 1.5px solid rgba(57, 255, 77, 0.65);
-        }
-
-        .client-dark-card {
-            background: linear-gradient(180deg, rgba(19, 28, 52, 0.95) 0%, rgba(11, 17, 34, 0.98) 100%);
-            border-radius: 22px;
-            border: 1px solid rgba(96, 165, 250, 0.24);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            contain: content;
-        }
-
-        .inner-profit-panel {
-            background: rgba(24, 35, 64, 0.75);
-            border: 1px solid rgba(148, 163, 184, 0.15);
-            border-radius: 14px;
-            padding: 10px 12px;
-        }
-
-        .btn-more-details {
-            width: 100%;
-            padding: 9px 14px;
-            border-radius: 999px;
-            background: linear-gradient(180deg, #1d4ed8 0%, #173ba6 100%);
-            border: 1px solid rgba(96, 165, 250, 0.45);
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-        .btn-more-details:active { transform: scale(0.97); }
-
-        .top-glass-pill {
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(148, 163, 184, 0.22);
-        }
-
-        /* LEDs Status Servidor / API */
-        .server-pill-online { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(57, 255, 77, 0.45); box-shadow: 0 0 16px rgba(57, 255, 77, 0.15); }
-        .server-pill-offline { background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(248, 113, 113, 0.55); box-shadow: 0 0 16px rgba(239, 68, 68, 0.22); }
-        .server-pill-checking { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(251, 191, 36, 0.4); }
-        .led-glow-green { background-color: #39ff4d; box-shadow: 0 0 8px #39ff4d, 0 0 16px #22c55e; }
-        .led-glow-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444, 0 0 16px #dc2626; }
-        .led-glow-amber { background-color: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
-
-        /* Modais Bottom Sheet */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(3, 6, 16, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.25s ease;
-        }
-        .bottom-sheet {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translate(-50%, 100%);
-            width: 100%;
-            max-width: 520px;
-            background: #10172d;
-            color: #ffffff;
-            border-top-left-radius: 26px;
-            border-top-right-radius: 26px;
-            padding: 18px 20px calc(env(safe-area-inset-bottom) + 28px);
-            z-index: 2001;
-            border-top: 1px solid rgba(96, 165, 250, 0.3);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-pill {
-            width: 40px;
-            height: 4px;
-            background: rgba(255,255,255,0.22);
-            border-radius: 99px;
-            margin: 0 auto 16px;
-        }
-
-        /* Navegação Principal Fixa (3 Abas) */
-        .main-tab-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1500;
-            background: rgba(9, 14, 34, 0.96);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(96, 165, 250, 0.25);
-            padding: 8px 12px calc(env(safe-area-inset-bottom) + 8px);
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.65);
-        }
-        .main-tab-btn {
-            flex: 1;
-            max-width: 180px;
-            padding: 8px 10px;
-            border-radius: 16px;
-            border: 1px solid transparent;
-            background: transparent;
-            color: #94a3b8;
-            font-size: 11px;
-            font-weight: 800;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .main-tab-btn i { font-size: 16px; }
-        .main-tab-btn.active[data-tab="solar"] {
-            background: rgba(245, 158, 11, 0.16);
-            border-color: rgba(245, 158, 11, 0.45);
-            color: #fbbf24;
-        }
-        .main-tab-btn.active[data-tab="software"] {
-            background: rgba(56, 189, 248, 0.16);
-            border-color: rgba(56, 189, 248, 0.45);
-            color: #38bdf8;
-        }
-        .main-tab-btn.active[data-tab="mapa"] {
-            background: rgba(57, 255, 77, 0.16);
-            border-color: rgba(57, 255, 77, 0.45);
-            color: #39ff4d;
-        }
-
-        /* Estilos Específicos da Aba Mapa 3D */
-        #view-mapa {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            background: #020617;
-            display: none;
-        }
-        #map { width: 100%; height: 100%; }
-        .map-header {
-            position: absolute;
-            top: calc(env(safe-area-inset-top) + 12px);
-            left: 12px; right: 12px; z-index: 100;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 16px; padding: 10px 14px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .map-controls {
-            position: absolute;
-            top: calc(env(safe-area-inset-top) + 72px);
-            right: 12px; z-index: 100;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .btn-map-ctrl {
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #fff; width: 44px; height: 44px; border-radius: 14px;
-            font-weight: 800; font-size: 13px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-        }
-        .btn-map-ctrl.unlocked { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.18); }
-        .btn-map-add {
-            position: absolute;
-            bottom: calc(env(safe-area-inset-bottom) + 138px);
-            right: 16px; z-index: 100; width: 56px; height: 56px;
-            border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff;
-            border: 2px solid rgba(255,255,255,0.25); display: none; align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 10px 25px rgba(37,99,235,0.55);
-        }
-        .map-bottom-bar {
-            position: absolute;
-            bottom: calc(env(safe-area-inset-bottom) + 76px);
-            left: 12px; right: 12px; z-index: 100;
-            display: flex; gap: 8px; pointer-events: none;
-        }
-        .btn-map-act {
-            flex: 1; pointer-events: auto;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #f8fafc; padding: 11px; border-radius: 14px;
-            font-weight: 700; font-size: 12px;
-            display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
-        }
-        .crosshair { position: absolute; inset: 0; z-index: 150; pointer-events: none; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .crosshair.active { display: flex; }
-        .crosshair-pin { width: 42px; height: 42px; border: 3px solid #2563eb; border-radius: 50%; background: rgba(37,99,235,0.25); }
-        .crosshair-btn { pointer-events: auto; margin-top: 16px; background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 800; cursor: pointer; }
-        .custom-svg-pin { filter: drop-shadow(0 6px 12px rgba(0,0,0,0.65)); cursor: pointer; }
-
-        .map-type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
-        .map-type-btn { padding: 10px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: #090f22; color: #94a3b8; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
-        .map-type-btn.active[data-type="usina"] { background: rgba(245, 158, 11, 0.18); border-color: #f59e0b; color: #f59e0b; }
-        .map-type-btn.active[data-type="cliente"] { background: rgba(16, 185, 129, 0.18); border-color: #10b981; color: #10b981; }
-        .map-type-btn.active[data-type="aluguel"] { background: rgba(59, 130, 246, 0.18); border-color: #3b82f6; color: #3b82f6; }
-        .map-type-btn.active[data-type="software"] { background: rgba(139, 92, 246, 0.18); border-color: #8b5cf6; color: #8b5cf6; }
-
-        .list-group { margin-bottom: 16px; }
-        .list-group-header {
-            font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            padding: 8px 12px; border-radius: 10px; margin-bottom: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.12);
-        }
-        .list-group-count { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,0.1); color: #fff; }
-        .map-list-item { background: #090f22; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-
-        #toast-notification {
-            position: fixed;
-            bottom: 82px;
-            left: 50%;
-            transform: translate(-50%, 140px);
-            z-index: 3000;
-            transition: transform 0.3s ease;
-            width: max-content;
-            max-width: 92vw;
-        }
-        #toast-notification.show { transform: translate(-50%, 0); }
     </style>
 </head>
-<body class="bg-solar-bg min-h-screen font-sans selection:bg-solar-neon selection:text-slate-950">
+<body class="min-h-screen w-full flex flex-col selection:bg-amber-500 selection:text-black pb-24">
 
-    <div class="page-ambient-bg"></div>
-
-    <!-- NOTIFICAÇÃO FLUTUANTE GLOBAL -->
-    <div id="toast-notification" class="bg-[#111933] border border-solar-neon/60 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2.5 text-xs font-bold">
-        <span class="w-5 h-5 rounded-full bg-solar-neon text-slate-950 flex items-center justify-center text-[10px] flex-shrink-0">
-            <i class="fa-solid fa-bolt"></i>
-        </span>
-        <span id="toast-text" class="truncate">Sincronizando...</span>
-    </div>
-
-    <!-- =========================================================================
-         ABA 1: ENERGIA SOLAR (SOLAR INVEST)
-         ========================================================================= -->
-    <div id="view-solar" class="relative z-10 w-full min-h-screen flex flex-col pb-24">
-        <header class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-3 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <!-- Logotipo SolarInvest -->
-            <div class="flex items-center gap-3 select-none">
-                <svg class="w-11 h-10 flex-shrink-0" viewBox="0 0 64 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g stroke="#FBBF24" stroke-width="2.2" stroke-linecap="round">
-                        <line x1="26" y1="4" x2="26" y2="10"/>
-                        <line x1="12" y1="9" x2="16" y2="14"/>
-                        <line x1="40" y1="9" x2="36" y2="14"/>
-                        <line x1="5" y1="21" x2="11" y2="23"/>
-                        <line x1="47" y1="21" x2="41" y2="23"/>
-                    </g>
-                    <path d="M13 33C13 24.7157 19.268 18 27 18C34.732 18 41 24.7157 41 33H13Z" fill="#FBBF24"/>
-                    <path d="M18 32L47 26L56 44L23 48L18 32Z" fill="#1D4ED8" stroke="#93C5FD" stroke-width="1.5" stroke-linejoin="round"/>
-                    <line x1="27.5" y1="30" x2="33.5" y2="46.5" stroke="#BAE6FD" stroke-width="1.2"/>
-                    <line x1="37.5" y1="28" x2="44.5" y2="45.2" stroke="#BAE6FD" stroke-width="1.2"/>
-                    <line x1="20.5" y1="39.5" x2="51.2" y2="34.5" stroke="#BAE6FD" stroke-width="1.2"/>
-                    <path d="M12 49C24 46 42 46 58 49" stroke="#39FF4D" stroke-width="2.2" stroke-linecap="round"/>
-                </svg>
-                <div>
-                    <div class="text-xl sm:text-2xl font-black tracking-tight leading-none">
-                        <span class="text-white">SOLAR</span><span class="text-amber-400">INVEST</span>
-                    </div>
-                    <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.22em] text-slate-300 uppercase mt-1">
-                        ENERGIA QUE GERA ECONOMIA
-                    </p>
-                </div>
+    <!-- BANNER DE NOTIFICAÇÃO PUSH INTERNA (TOPO) -->
+    <div id="owner-toast-banner" class="fixed top-3 left-0 right-0 mx-auto z-50 w-[94%] max-w-md transform -translate-y-44 opacity-0 transition-all duration-500 pointer-events-none">
+        <div class="bg-obsidian-800/95 backdrop-blur-md border border-amber-500/70 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 pointer-events-auto">
+            <div class="relative w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 animate-ring">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
             </div>
-
-            <!-- Controles Superiores Solar -->
-            <div class="flex flex-wrap items-center justify-center gap-2.5">
-                <!-- LED Servidor PC -->
-                <button onclick="openSolarServerModal()" id="solar-server-pill" class="server-pill-checking rounded-2xl px-3.5 py-2 flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer">
-                    <span class="relative flex h-3 w-3 flex-shrink-0">
-                        <span id="solar-led-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span id="solar-led-dot" class="relative inline-flex rounded-full h-3 w-3 led-glow-amber"></span>
-                    </span>
-                    <div class="text-left">
-                        <span id="solar-status-label" class="block text-[11px] font-extrabold tracking-wider uppercase text-amber-300 leading-none">VERIFICANDO...</span>
-                        <span id="solar-status-sub" class="block text-[9px] font-medium text-slate-300 leading-tight mt-0.5">Servidor PC</span>
-                    </div>
-                </button>
-
-                <!-- Seletor de Mês -->
-                <div class="top-glass-pill rounded-2xl px-4 py-2 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-200">
-                        <i class="fa-regular fa-calendar text-sm"></i>
-                    </div>
-                    <div class="text-left">
-                        <span class="block text-[10px] font-medium text-slate-400 leading-tight">Lucro Total do Mês</span>
-                        <div class="flex items-center gap-1.5">
-                            <select id="solar-month-filter" class="bg-transparent text-white font-extrabold text-sm capitalize cursor-pointer focus:outline-none pr-1" onchange="filterSolarByMonth()"></select>
-                            <i class="fa-solid fa-chevron-down text-slate-300 text-[10px] pointer-events-none"></i>
-                        </div>
-                    </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 truncate">Secreta Barber • Proprietário</span>
+                    <span class="text-[10px] text-zinc-400 shrink-0">Agora</span>
                 </div>
-
-                <!-- Botão Engrenagem Central -->
-                <button onclick="openUnifiedConfigModal()" title="Configurações Gerais (Planilhas, FlowNest, Mapa e PIX)" class="top-glass-pill w-11 h-11 rounded-full flex items-center justify-center text-white hover:border-solar-neon/50 active:scale-90 transition-all cursor-pointer">
-                    <i class="fa-solid fa-gear text-sm"></i>
-                </button>
+                <p id="toast-title" class="text-xs sm:text-sm font-bold text-white truncate mt-0.5">Alerta do Sistema</p>
+                <p id="toast-desc" class="text-xs text-zinc-300 mt-0.5 break-words">Mensagem...</p>
             </div>
-        </header>
-
-        <!-- Hero Card Lucro Solar -->
-        <section class="w-full max-w-3xl mx-auto px-4 sm:px-6 mt-2 mb-7">
-            <div class="hero-profit-box px-5 py-5 sm:px-9 sm:py-7 flex items-center justify-between gap-4">
-                <div class="bolt-orb w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-bolt text-2xl sm:text-3xl text-solar-neon"></i>
-                </div>
-                <div class="flex-1 text-center min-w-0">
-                    <div class="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] text-slate-200 mb-1">
-                        <i class="fa-solid fa-arrow-trend-up text-solar-neon"></i>
-                        <span id="solar-hero-month-title">LUCRO TOTAL DO MÊS</span>
-                    </div>
-                    <div class="my-1 flex items-baseline justify-center gap-1.5 sm:gap-2">
-                        <span class="text-2xl sm:text-4xl font-extrabold text-slate-100">R$</span>
-                        <span id="solar-total-revenue" class="tabular-nums text-4xl sm:text-6xl font-black text-solar-neon tracking-tight">0,00</span>
-                    </div>
-                    <div class="mt-2 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] sm:text-xs text-slate-200 font-medium">
-                        <span class="w-4 h-4 rounded-full bg-solar-neon text-slate-950 flex items-center justify-center text-[9px] font-black"><i class="fa-solid fa-check"></i></span>
-                        <span id="solar-month-subtitle">Lucro Líquido da Usina</span>
-                    </div>
-                </div>
-                <div class="hidden sm:flex items-center justify-center flex-shrink-0 w-24 h-20">
-                    <svg viewBox="0 0 110 80" class="w-full h-full" fill="none">
-                        <rect x="8" y="54" width="12" height="20" rx="2" fill="#39FF4D" fill-opacity="0.5"/>
-                        <rect x="26" y="45" width="12" height="29" rx="2" fill="#39FF4D" fill-opacity="0.65"/>
-                        <rect x="44" y="36" width="12" height="38" rx="2" fill="#39FF4D" fill-opacity="0.75"/>
-                        <rect x="62" y="26" width="12" height="48" rx="2" fill="#39FF4D" fill-opacity="0.88"/>
-                        <rect x="80" y="16" width="12" height="58" rx="2" fill="#39FF4D"/>
-                        <path d="M10 48C34 42 62 28 94 8" stroke="#6EE7B7" stroke-width="3" stroke-linecap="round"/>
-                        <path d="M84 7H96V19" stroke="#6EE7B7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-        </section>
-
-        <!-- Lista de Clientes Solar -->
-        <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <i class="fa-solid fa-users text-sky-400 text-lg"></i>
-                    <h2 class="text-lg sm:text-xl font-extrabold text-white tracking-tight">Clientes & Faturas</h2>
-                    <span id="solar-cards-badge" class="tabular-nums text-[11px] font-bold bg-white/10 text-slate-300 px-2.5 py-0.5 rounded-full border border-white/10">0</span>
-                    <span class="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-400/25 px-2.5 py-0.5 rounded-full font-medium">
-                        <i class="fa-brands fa-whatsapp mr-1"></i>Clique no nome para enviar PNG + Mensagem
-                    </span>
-                </div>
-                <div class="relative w-full sm:w-64">
-                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                    <input type="text" id="solar-search-input" oninput="renderSolarDashboard()" placeholder="Buscar cliente solar..." class="w-full bg-white/[0.06] border border-white/15 rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400/60">
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="solar-cards-container"></div>
-        </main>
-    </div>
-
-    <!-- =========================================================================
-         ABA 2: SOFTWARE / FLOWNEST (IA)
-         ========================================================================= -->
-    <div id="view-software" class="hidden relative z-10 w-full min-h-screen flex-col pb-24">
-        <header class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-3 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <!-- Logotipo FlowNest(IA) -->
-            <div class="flex items-center gap-3 select-none">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500/20 to-emerald-500/20 border border-sky-400/40 flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-layer-group text-xl text-solar-neon"></i>
-                </div>
-                <div>
-                    <div class="text-xl sm:text-2xl font-black tracking-tight leading-none">
-                        <span class="text-white">FLOWNEST</span><span class="text-sky-400">(IA)</span>
-                    </div>
-                    <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.22em] text-slate-300 uppercase mt-1">
-                        GESTÃO DE LICENÇAS & SAAS
-                    </p>
-                </div>
-            </div>
-
-            <!-- Controles Superiores FlowNest -->
-            <div class="flex flex-wrap items-center justify-center gap-2.5">
-                <button onclick="loadFlowNestData(true)" id="fn-server-pill" class="server-pill-checking rounded-2xl px-3.5 py-2 flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer">
-                    <span class="relative flex h-3 w-3 flex-shrink-0">
-                        <span id="fn-led-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span id="fn-led-dot" class="relative inline-flex rounded-full h-3 w-3 led-glow-amber"></span>
-                    </span>
-                    <div class="text-left">
-                        <span id="fn-status-label" class="block text-[11px] font-extrabold tracking-wider uppercase text-amber-300 leading-none">CONECTANDO...</span>
-                        <span id="fn-status-sub" class="block text-[9px] font-medium text-slate-300 leading-tight mt-0.5">Apps Script FlowNest</span>
-                    </div>
-                </button>
-
-                <div class="top-glass-pill rounded-2xl px-4 py-2 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sky-400">
-                        <i class="fa-solid fa-filter text-xs"></i>
-                    </div>
-                    <div class="text-left">
-                        <span class="block text-[10px] font-medium text-slate-400 leading-tight">Filtrar Licenças</span>
-                        <div class="flex items-center gap-1.5">
-                            <select id="fn-status-filter" class="bg-transparent text-white font-extrabold text-sm cursor-pointer focus:outline-none pr-1" onchange="renderFlowNestDashboard()">
-                                <option value="TODOS" class="bg-[#0b1022] text-white">Todos os Clientes</option>
-                                <option value="ATIVO" class="bg-[#0b1022] text-emerald-400">Somente Ativos (Verde)</option>
-                                <option value="OFF" class="bg-[#0b1022] text-red-400">Bloqueados / OFF (Vermelho)</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down text-slate-300 text-[10px] pointer-events-none"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botão Engrenagem Central -->
-                <button onclick="openUnifiedConfigModal()" title="Configurações Gerais (Planilhas, FlowNest, Mapa e PIX)" class="top-glass-pill w-11 h-11 rounded-full flex items-center justify-center text-white hover:border-solar-neon/50 active:scale-90 transition-all cursor-pointer">
-                    <i class="fa-solid fa-gear text-sm"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Barra de Controle Remoto Estética KB -->
-        <section id="kb-control-bar" class="hidden w-full max-w-3xl mx-auto px-4 sm:px-6 mt-1 mb-3">
-            <div class="top-glass-pill rounded-2xl px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border border-sky-400/35">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-400/35 flex items-center justify-center text-sky-400 flex-shrink-0">
-                        <i class="fa-solid fa-car-side text-sm"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-extrabold text-white">Estética KB (App Cliente)</span>
-                            <span id="kb-status-badge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/35">VERIFICANDO...</span>
-                        </div>
-                        <span id="kb-status-subtext" class="block text-[10px] text-slate-400 mt-0.5">Sincronizado via Apps Script Estética KB</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button type="button" onclick="setKbEsteticaStatus('ATIVO')" id="btn-kb-ativo" class="flex-1 sm:flex-initial py-2 px-3.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 cursor-pointer">
-                        <i class="fa-solid fa-check"></i><span>Ativo</span>
-                    </button>
-                    <button type="button" onclick="setKbEsteticaStatus('BLOQUEADO')" id="btn-kb-bloqueado" class="flex-1 sm:flex-initial py-2 px-3.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 bg-red-500/15 text-red-300 border border-red-500/40 cursor-pointer">
-                        <i class="fa-solid fa-ban"></i><span>Bloqueado</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Hero Card MRR FlowNest -->
-        <section class="w-full max-w-3xl mx-auto px-4 sm:px-6 mt-2 mb-7">
-            <div class="hero-profit-box px-5 py-5 sm:px-9 sm:py-7 flex items-center justify-between gap-4">
-                <div class="bolt-orb w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-sack-dollar text-2xl sm:text-3xl text-solar-neon"></i>
-                </div>
-                <div class="flex-1 text-center min-w-0">
-                    <div class="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.14em] text-slate-200 mb-1">
-                        <i class="fa-solid fa-arrow-trend-up text-solar-neon"></i>
-                        <span>RECEITA MENSAL ATIVA (MRR)</span>
-                    </div>
-                    <div class="my-1 flex items-baseline justify-center gap-1.5 sm:gap-2">
-                        <span class="text-2xl sm:text-4xl font-extrabold text-slate-100">R$</span>
-                        <span id="fn-total-revenue" class="tabular-nums text-4xl sm:text-6xl font-black text-solar-neon tracking-tight">0,00</span>
-                    </div>
-                    <div class="mt-2 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] sm:text-xs text-slate-200 font-medium">
-                        <span class="w-4 h-4 rounded-full bg-solar-neon text-slate-950 flex items-center justify-center text-[9px] font-black"><i class="fa-solid fa-check"></i></span>
-                        <span id="fn-subtitle-display">0 ativos • R$ 0,00 total cadastrado</span>
-                    </div>
-                </div>
-                <div class="hidden sm:flex items-center justify-center flex-shrink-0 w-24 h-20">
-                    <svg viewBox="0 0 110 80" class="w-full h-full" fill="none">
-                        <rect x="8" y="54" width="12" height="20" rx="2" fill="#39FF4D" fill-opacity="0.5"/>
-                        <rect x="26" y="45" width="12" height="29" rx="2" fill="#39FF4D" fill-opacity="0.65"/>
-                        <rect x="44" y="36" width="12" height="38" rx="2" fill="#39FF4D" fill-opacity="0.75"/>
-                        <rect x="62" y="26" width="12" height="48" rx="2" fill="#39FF4D" fill-opacity="0.88"/>
-                        <rect x="80" y="16" width="12" height="58" rx="2" fill="#39FF4D"/>
-                        <path d="M10 48C34 42 62 28 94 8" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
-                        <path d="M84 7H96V19" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
-        </section>
-
-        <!-- Lista Assinantes FlowNest -->
-        <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <i class="fa-solid fa-users text-sky-400 text-lg"></i>
-                    <h2 class="text-lg sm:text-xl font-extrabold text-white tracking-tight">Assinantes & Licenças</h2>
-                    <span id="fn-cards-badge" class="tabular-nums text-[11px] font-bold bg-white/10 text-slate-300 px-2.5 py-0.5 rounded-full border border-white/10">0</span>
-                </div>
-                <div class="flex items-center gap-2.5 w-full sm:w-auto">
-                    <button onclick="openFnNewClientModal()" class="bg-solar-neon hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded-full flex items-center justify-center gap-1.5 shadow-[0_0_18px_rgba(57,255,77,0.35)] transition-all flex-shrink-0 cursor-pointer">
-                        <i class="fa-solid fa-user-plus text-xs"></i><span>Novo Cliente</span>
-                    </button>
-                    <div class="relative flex-1 sm:w-60">
-                        <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="fn-search-input" oninput="renderFlowNestDashboard()" placeholder="Buscar assinante..." class="w-full bg-white/[0.06] border border-white/15 rounded-full pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400/60">
-                    </div>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="fn-cards-container"></div>
-        </main>
-    </div>
-
-    <!-- =========================================================================
-         ABA 3: MAPA 3D (USINAS, CLIENTES, IMÓVEIS & FLOWNEST IA)
-         ========================================================================= -->
-    <div id="view-mapa">
-        <div id="map"></div>
-
-        <!-- Controles do Mapa (3D e Lock) -->
-        <div class="map-controls">
-            <button class="btn-map-ctrl" id="btn3d">3D</button>
-            <button class="btn-map-ctrl" id="btnAdminAuth" title="Área do Empresário"><i data-lucide="lock"></i></button>
-        </div>
-
-        <!-- Mira de Precisão -->
-        <div class="crosshair" id="crosshair">
-            <div class="crosshair-pin"></div>
-            <button class="crosshair-btn" id="btnConfirmCrosshair"><i data-lucide="check"></i> Confirmar Ponto Aqui</button>
-        </div>
-
-        <!-- Botão (+) -> Apenas para Empresário Logado -->
-        <button class="btn-map-add" id="btnToggleCrosshair"><i data-lucide="plus" style="width:26px;height:26px;"></i></button>
-
-        <!-- Top Bar do Mapa -->
-        <div class="map-header">
-            <div class="flex items-center gap-2 font-extrabold text-sm select-none cursor-pointer" id="brandBtn">
-                <i data-lucide="sun" class="text-amber-400 w-4 h-4"></i>
-                <span>Mapa 3D</span>
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40 hidden" id="modeBadge">ADM</span>
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/40 hidden" id="offlineBadge">OFFLINE</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <button class="btn-map-act !py-1.5 !px-2.5 !text-[11px]" id="btnSummary" style="display:none;"><i data-lucide="pie-chart" class="w-3.5 h-3.5"></i> Resumo</button>
-                <button onclick="openUnifiedConfigModal()" class="btn-map-act !py-1.5 !px-2.5 !text-[11px]" title="Configurar URL do Mapa, FlowNest e Solar"><i class="fa-solid fa-gear"></i></button>
-            </div>
-        </div>
-
-        <!-- Bottom Actions do Mapa -->
-        <div class="map-bottom-bar">
-            <button class="btn-map-act" id="btnList"><i data-lucide="list" class="w-4 h-4"></i> Pontos</button>
-            <button class="btn-map-act" id="btnSync"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar</button>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         BARRA DE NAVEGAÇÃO PRINCIPAL FIXA (3 ABAS)
-         ========================================================================= -->
-    <nav class="main-tab-bar">
-        <button class="main-tab-btn active" data-tab="solar" onclick="switchMainTab('solar')">
-            <i class="fa-solid fa-solar-panel"></i>
-            <span>Energia Solar</span>
-        </button>
-        <button class="main-tab-btn" data-tab="software" onclick="switchMainTab('software')">
-            <i class="fa-solid fa-microchip"></i>
-            <span>FlowNest (IA)</span>
-        </button>
-        <button class="main-tab-btn" data-tab="mapa" onclick="switchMainTab('mapa')">
-            <i class="fa-solid fa-map-location-dot"></i>
-            <span>Mapa 3D</span>
-        </button>
-    </nav>
-
-    <!-- =========================================================================
-         MODAIS UNIFICADOS (CONFIGURAÇÃO CENTRAL + SOLAR + FLOWNEST + MAPA)
-         ========================================================================= -->
-
-    <!-- MODAL DE CONFIGURAÇÕES CENTRALIZADO (ENGRENAGEM) -->
-    <div class="modal-overlay" id="unified-config-overlay" onclick="closeUnifiedConfigModal()"></div>
-    <div class="bottom-sheet" id="unified-config-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-gear text-solar-neon"></i>
-                <h3 class="text-xl font-extrabold text-white">Configurações Gerais</h3>
-            </div>
-            <button onclick="closeUnifiedConfigModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300">
-                <i class="fa-solid fa-xmark"></i>
+            <button type="button" onclick="hideToastBanner()" class="text-zinc-400 hover:text-white p-1 shrink-0">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
+    </div>
 
-        <p class="text-[11px] text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3 py-2 mb-4 leading-relaxed">
-            <i class="fa-solid fa-shield-halved mr-1"></i>
-            Todas as URLs e chaves ficam salvas <strong>somente na memória deste aparelho</strong> (localStorage).
-        </p>
-
-        <div class="space-y-4">
-            <!-- 1. ENERGIA SOLAR -->
-            <div class="bg-white/[0.03] border border-amber-500/25 rounded-2xl p-3.5 space-y-2.5">
-                <span class="block text-xs font-extrabold text-amber-400 uppercase tracking-wider">
-                    <i class="fa-solid fa-solar-panel mr-1"></i> 1. Aba Energia Solar (Solar Invest)
-                </span>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Link ou ID da Planilha Google Sheets</label>
-                    <input type="text" id="cfg-solar-sheet-id" placeholder="Cole o Link ou ID da Planilha..." class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400">
+    <!-- CABEÇALHO SUPERIOR FIXO -->
+    <header class="sticky top-0 z-40 w-full bg-obsidian-950/95 backdrop-blur-md border-b border-zinc-800/80">
+        <div class="w-full max-w-2xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+            <!-- Identidade Proprietário -->
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black font-extrabold shadow shrink-0">
+                    <i data-lucide="crown" class="w-4 h-4"></i>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Repositório Monitor Servidor PC (usuario/repo)</label>
-                    <input type="text" id="cfg-solar-github-repo" placeholder="Ex: junim887876/Aposta" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-400">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white leading-tight truncate">
+                            SECRETA <span class="text-amber-400">BARBER</span>
+                        </h1>
+                        <span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-extrabold text-amber-400 uppercase shrink-0">Dono</span>
+                    </div>
+                    <p class="text-[11px] text-zinc-400 flex items-center gap-1.5 truncate">
+                        <span id="onesignal-header-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-500 inline-block shrink-0"></span>
+                        <span id="onesignal-header-status" class="truncate">Push OneSignal: Verificando...</span>
+            <!-- Ações Rápidas (Ativar Push + Instalar PWA + Simular Cliente) -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" id="btn-enable-push" onclick="requestOneSignalPermission()" class="px-2.5 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1" title="Ativar notificações push neste celular">
+                    <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Ativar Push</span>
+                </button>
+                <button type="button" id="btn-install-pwa" onclick="triggerPwaInstall()" class="hidden px-2.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>App</span>
+                </button>
+                <button type="button" onclick="simulateNewClientBooking()" class="px-3 py-2 rounded-xl text-xs font-bold bg-obsidian-800 hover:bg-obsidian-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5" title="Simular cliente marcando horário agora">
+                    <i data-lucide="bell-plus" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Simular Cliente</span>
+                    <span class="sm:hidden">Testar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 py-4 space-y-5">
+
+        <!-- ========================================================= -->
+        <!-- ABA 1: AGENDA & CLIENTES (ACEITAR / CONCLUIR / REJEITAR)  -->
+        <!-- ========================================================= -->
+        <section id="tab-agenda" class="space-y-4 w-full">
+
+            <!-- Cards Resumo Rápido do Dia -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Marcados Hoje</span>
+                    <span id="stat-today-count" class="text-lg sm:text-xl font-extrabold text-white mt-0.5 block">0</span>
+                </div>
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Previsto Hoje</span>
+                    <span id="stat-today-revenue" class="text-base sm:text-xl font-extrabold text-emerald-400 mt-0.5 block truncate">R$ 0</span>
+                </div>
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3">
+                    <span class="text-[10px] font-semibold uppercase text-zinc-400 block">Fecha às</span>
+                    <span id="stat-closing-time" class="text-lg sm:text-xl font-extrabold text-amber-400 mt-0.5 block">19:00</span>
                 </div>
             </div>
 
-            <!-- 2. FLOWNEST (IA) -->
-            <div class="bg-white/[0.03] border border-sky-400/25 rounded-2xl p-3.5 space-y-2.5">
-                <span class="block text-xs font-extrabold text-sky-400 uppercase tracking-wider">
-                    <i class="fa-solid fa-microchip mr-1"></i> 2. Aba FlowNest (IA) — Licenças Software
-                </span>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">URL Google Apps Script (FlowNest IA)</label>
-                    <input type="url" id="cfg-fn-appscript-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-sky-400">
+            <!-- Filtro de Data e Status -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-3.5 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-400"></i>
+                        <span>Clientes Agendados</span>
+                    </h2>
+                    <div class="flex items-center gap-1.5">
+                        <input type="date" id="agenda-date-filter" onchange="renderOwnerBookings()"
+                            class="px-2.5 py-1.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <button type="button" onclick="clearDateFilter()" class="px-2.5 py-1.5 rounded-xl bg-obsidian-800 text-[11px] font-semibold text-zinc-300 hover:text-white">
+                            Todos
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">URL Google Apps Script — Estética KB (Opcional)</label>
-                    <input type="url" id="cfg-kb-appscript-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-400">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Link de Acesso Portal FlowNest (Enviado no WhatsApp)</label>
-                    <input type="url" id="cfg-fn-portal-url" placeholder="https://seusistema.com.br" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-sky-400">
+
+                <!-- Filtros de Status -->
+                <div class="flex gap-1.5 overflow-x-auto pb-1">
+                    <button type="button" onclick="setBookingStatusFilter('all')" id="filter-status-all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0">Todos</button>
+                    <button type="button" onclick="setBookingStatusFilter('confirmed')" id="filter-status-confirmed" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Ativos</button>
+                    <button type="button" onclick="setBookingStatusFilter('completed')" id="filter-status-completed" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Concluídos</button>
+                    <button type="button" onclick="setBookingStatusFilter('rejected')" id="filter-status-rejected" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0">Rejeitados</button>
                 </div>
             </div>
 
-            <!-- 3. MAPA 3D -->
-            <div class="bg-white/[0.03] border border-emerald-400/25 rounded-2xl p-3.5 space-y-2.5">
-                <span class="block text-xs font-extrabold text-solar-neon uppercase tracking-wider">
-                    <i class="fa-solid fa-map-location-dot mr-1"></i> 3. Aba Mapa 3D (Sincronização Offline/Online)
-                </span>
+            <!-- Lista de Agendamentos -->
+            <div id="owner-bookings-container" class="space-y-3">
+                <!-- Renderizado via JS -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 2: HORÁRIOS DE TRABALHO (ABERTURA, FECHAMENTO, SLOTS) -->
+        <!-- ========================================================= -->
+        <section id="tab-horarios" class="hidden space-y-4 w-full">
+
+            <!-- Configuração de Expediente (Até que horas vai trabalhar) -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-zinc-800 pb-3">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+                        <span>Expediente & Horário de Fechamento</span>
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Defina até que horas você vai trabalhar e quais horários ficam abertos para os clientes.</p>
+                </div>
+
+                <!-- Dias da Semana que Trabalha -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400">Dias de Atendimento</label>
+                    <div id="work-days-grid" class="grid grid-cols-7 gap-1.5">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
+                <!-- Início, Fim (Até que horas trabalha) e Intervalo -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs text-zinc-300 mb-1">Início do Expediente</label>
+                        <input type="time" id="cfg-open-time" value="09:00"
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-amber-400 mb-1">Trabalhar Até (Fechamento)</label>
+                        <input type="time" id="cfg-close-time" value="19:00"
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-amber-500/50 text-sm font-bold text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-300 mb-1">Intervalo entre Cortes</label>
+                        <select id="cfg-slot-interval" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-sm text-white focus:outline-none focus:border-amber-500">
+                            <option value="30">A cada 30 min</option>
+                            <option value="45" selected>A cada 45 min</option>
+                            <option value="60">A cada 60 min</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Horário de Almoço / Pausa -->
+                <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                            <i data-lucide="coffee" class="w-3.5 h-3.5 text-amber-400"></i>
+                            Pausa para Almoço / Descanso
+                        </span>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cfg-lunch-enabled" checked class="accent-amber-500 w-4 h-4">
+                            <span class="text-xs text-zinc-400">Ativo</span>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] text-zinc-400 mb-1">Início da Pausa</label>
+                            <input type="time" id="cfg-lunch-start" value="12:00"
+                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-zinc-400 mb-1">Fim da Pausa</label>
+                            <input type="time" id="cfg-lunch-end" value="13:30"
+                                class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-xs text-white">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="saveAndGenerateSchedule()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider transition">
+                    Gerar & Salvar Grade de Horários
+                </button>
+            </div>
+
+            <!-- Seleção Fina: Quais Horários Vai Trabalhar (Ativar/Bloquear um por um) -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Quais Horários Vão Ficar Abertos</h3>
+                        <p class="text-[11px] text-zinc-400">Toque para bloquear ou liberar um horário específico.</p>
+                    </div>
+                    <span id="active-slots-badge" class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold shrink-0">0 abertos</span>
+                </div>
+
+                <div id="owner-slots-toggle-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <!-- Botões de cada horário renderizados via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 3: CONTABILIDADE, FATURAMENTO MENSAL & LUCRO          -->
+        <!-- ========================================================= -->
+        <section id="tab-contabilidade" class="hidden space-y-4 w-full">
+
+            <!-- Seletor do Mês -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">URL Google Apps Script (Planilha do Mapa 3D)</label>
-                    <input type="url" id="cfg-map-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-solar-neon">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Financeiro Secreta Barber</span>
+                    <h2 class="text-base font-bold text-white">Contabilidade Mensal</h2>
+                </div>
+                <input type="month" id="finance-month-picker" onchange="renderFinanceDashboard()"
+                    class="px-3 py-2 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <!-- Cards Principais: Faturamento Bruto, Despesas e Lucro Líquido -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Faturamento -->
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-zinc-400">Faturamento Mensal</span>
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="fin-gross-revenue" class="text-xl font-extrabold text-white mt-2">R$ 0,00</p>
+                    <p id="fin-cuts-count-label" class="text-[11px] text-zinc-400 mt-1">0 atendimentos no mês</p>
+                </div>
+
+                <!-- Despesas -->
+                <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-zinc-400">Despesas / Custos</span>
+                        <div class="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center">
+                            <i data-lucide="trending-down" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="fin-total-expenses" class="text-xl font-extrabold text-red-400 mt-2">R$ 0,00</p>
+                    <p class="text-[11px] text-zinc-400 mt-1">Produtos, aluguel, luz, etc.</p>
+                </div>
+
+                <!-- Lucro Líquido -->
+                <div class="bg-gradient-to-br from-obsidian-900 to-obsidian-800 border border-amber-500/40 rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-400">Lucro Líquido</span>
+                        <span id="fin-profit-margin" class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold">0% margem</span>
+                    </div>
+                    <p id="fin-net-profit" class="text-xl font-extrabold text-emerald-400 mt-2">R$ 0,00</p>
+                    <p id="fin-avg-ticket" class="text-[11px] text-zinc-300 mt-1">Ticket médio: R$ 0,00</p>
                 </div>
             </div>
 
-            <!-- 4. PIX OFICIAL -->
-            <div class="bg-white/[0.03] border border-white/15 rounded-2xl p-3.5 space-y-2.5">
-                <span class="block text-xs font-extrabold text-white uppercase tracking-wider">
-                    <i class="fa-brands fa-pix text-teal-400 mr-1"></i> 4. Código PIX Copia e Cola (QR Code das Faturas)
-                </span>
-                <div>
-                    <textarea id="cfg-pix-code" rows="2" placeholder="00020126330014br.gov.bcb.pix..." class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-solar-neon"></textarea>
+            <!-- Desempenho por Serviço -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i>
+                    <span>Receita por Tipo de Serviço</span>
+                </h3>
+                <div id="fin-services-breakdown" class="space-y-2.5">
+                    <!-- Barras de progresso geradas via JS -->
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Modo do Valor no QR Code PIX</label>
-                    <select id="cfg-pix-mode" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white font-semibold focus:outline-none">
-                        <option value="official_with_amount">Injetar Valor da Fatura/Mensalidade Automaticamente</option>
-                        <option value="official_exact">Usar Código PIX Oficial Exato (Sem valor fixo)</option>
+            </div>
+
+            <!-- Lançar Receita Extra ou Despesa -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="wallet" class="w-4 h-4 text-amber-400"></i>
+                    <span>Lançar Despesa ou Venda Extra</span>
+                </h3>
+                <form onsubmit="handleAddTransaction(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                    <select id="tx-type" class="px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs font-semibold text-white">
+                        <option value="expense">Despesa (-)</option>
+                        <option value="income">Receita Extra (+)</option>
                     </select>
+                    <input type="text" id="tx-desc" required placeholder="Ex: Pomada, Lâminas, Aluguel..."
+                        class="sm:col-span-2 px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <div class="flex gap-2">
+                        <input type="number" id="tx-amount" step="0.01" min="0.01" required placeholder="R$ 0,00"
+                            class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs shrink-0">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Extrato de Lançamentos Manuais do Mês -->
+                <div id="fin-transactions-list" class="space-y-2 pt-2 border-t border-zinc-800/80 max-h-60 overflow-y-auto">
+                    <!-- Renderizado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ABA 4: IA LOCAL DE MOVIMENTO (ANÁLISE ESTATÍSTICA LOCAL)  -->
+        <!-- ========================================================= -->
+        <section id="tab-ia" class="hidden space-y-4 w-full">
+
+            <!-- Cabeçalho da IA Local -->
+            <div class="bg-gradient-to-r from-obsidian-900 via-obsidian-800 to-obsidian-900 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="cpu" class="w-3 h-3"></i>
+                        IA Local Offline • Motor Heurístico
+                    </span>
+                    <button type="button" onclick="runLocalMovementAI()" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold flex items-center gap-1 transition">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        <span>Recalcular</span>
+                    </button>
+                </div>
+                <h2 class="text-base sm:text-lg font-bold text-white">Previsão & Radar de Movimento</h2>
+                <p class="text-xs text-zinc-400">Analisa automaticamente seus horários marcados, taxa de ocupação, horários ociosos e frequência dos clientes sem depender de internet.</p>
+            </div>
+
+            <!-- Termômetro de Movimento Atual -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase text-zinc-400">Termômetro de Movimento (Hoje)</span>
+                    <span id="ai-occupancy-badge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-zinc-800 text-zinc-300">Calculando...</span>
+                </div>
+                <div class="w-full h-3 bg-obsidian-950 rounded-full overflow-hidden border border-zinc-800">
+                    <div id="ai-occupancy-bar" class="h-full bg-amber-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="ai-occupancy-summary" class="text-xs text-zinc-300 leading-relaxed">Analisando agenda...</p>
+            </div>
+
+            <!-- Mapa de Calor por Horário (Pico vs. Baixo Movimento) -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+                        <span>Mapa de Demanda por Horário</span>
+                    </h3>
+                    <span class="text-[11px] text-zinc-400">Base histórica</span>
+                </div>
+                <div id="ai-hourly-heatmap" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <!-- Renderizado via JS -->
                 </div>
             </div>
 
-            <div class="flex gap-2 pt-2">
-                <button onclick="saveUnifiedConfig()" class="flex-1 py-3.5 bg-solar-neon text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer">
-                    Salvar Todas as Configurações
+            <!-- Diagnóstico & Recomendações Práticas da IA -->
+            <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
+                    <span>Recomendações Inteligentes para Você</span>
+                </h3>
+                <div id="ai-recommendations-list" class="space-y-2.5">
+                    <!-- Insights gerados pelo motor local -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (ESTILO APP NATIVO MOBILE - 4 ABAS) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90">
+        <div class="max-w-2xl mx-auto grid grid-cols-4 px-1 py-1.5">
+            <button type="button" onclick="switchOwnerTab('agenda')" id="nav-agenda" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-amber-400 font-bold transition">
+                <div class="relative">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                    <span id="nav-agenda-badge" class="hidden absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-extrabold flex items-center justify-center">0</span>
+                </div>
+                <span class="text-[10px] mt-1">Agenda</span>
+            </button>
+
+            <button type="button" onclick="switchOwnerTab('horarios')" id="nav-horarios" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1">Horários</span>
+            </button>
+
+            <button type="button" onclick="switchOwnerTab('contabilidade')" id="nav-contabilidade" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1">Caixa</span>
+            </button>
+
+            <button type="button" onclick="switchOwnerTab('ia')" id="nav-ia" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1">IA Local</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL DE REJEIÇÃO DE HORÁRIO -->
+    <div id="reject-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-3">
+        <div class="bg-obsidian-900 border border-red-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="x-circle" class="w-5 h-5 text-red-400"></i>
+                    <span>Rejeitar Horário</span>
+                </h3>
+                <button type="button" onclick="closeRejectModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
-                <button onclick="clearUnifiedConfig()" class="py-3.5 px-4 bg-red-500/15 text-red-400 border border-red-500/30 font-bold rounded-xl text-xs uppercase cursor-pointer">
-                    Limpar
+            </div>
+            <p id="reject-client-info" class="text-xs text-zinc-300 bg-obsidian-950 p-3 rounded-xl border border-zinc-800">
+                Cliente...
+            </p>
+            <div>
+                <label class="block text-xs text-zinc-400 mb-1">Motivo da rejeição (enviado no WhatsApp do cliente)</label>
+                <select id="reject-reason-select" class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white mb-2">
+                    <option value="Imprevisto pessoal neste horário">Imprevisto pessoal neste horário</option>
+                    <option value="Expediente encerrado mais cedo hoje">Expediente encerrado mais cedo hoje</option>
+                    <option value="Horário indisponível, por favor escolha outro">Horário indisponível, por favor escolha outro</option>
+                    <option value="custom">Outro motivo...</option>
+                </select>
+                <input type="text" id="reject-custom-reason" placeholder="Digite o motivo (opcional)"
+                    class="w-full px-3 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs text-white focus:outline-none focus:border-red-500">
+            </div>
+            <div class="flex flex-col gap-2 pt-1">
+                <button type="button" onclick="confirmRejectBooking(true)" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Rejeitar & Avisar no WhatsApp</span>
+                </button>
+                <button type="button" onclick="confirmRejectBooking(false)" class="w-full py-2.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-zinc-200 font-semibold text-xs transition">
+                    Apenas Rejeitar e Liberar Horário
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETALHES SERVIDOR PC (ABA SOLAR) -->
-    <div class="modal-overlay" id="solar-server-overlay" onclick="closeSolarServerModal()"></div>
-    <div class="bottom-sheet" id="solar-server-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-extrabold text-white">Servidor Django & Robô</h3>
-            <button onclick="closeSolarServerModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="solar-modal-server-banner" class="rounded-2xl p-4 mb-4 border border-white/10 bg-white/[0.04] text-center">
-            <span id="solar-modal-big-status" class="text-lg font-black uppercase text-amber-300">VERIFICANDO...</span>
-            <p id="solar-modal-server-desc" class="text-xs text-slate-300 mt-1">Consultando sinal...</p>
-        </div>
-        <div class="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-2 text-xs mb-4">
-            <div class="flex justify-between"><span>Último Sinal:</span><strong id="srv-last-seen">--</strong></div>
-            <div class="flex justify-between"><span>Tempo Decorrido:</span><strong id="srv-elapsed" class="text-sky-300">--</strong></div>
-            <div class="flex justify-between"><span>Atividade:</span><strong id="srv-robo-activity">--</strong></div>
-            <div class="flex justify-between"><span>Faturas Pendentes:</span><strong id="srv-ucs-pending" class="text-amber-300">--</strong></div>
-        </div>
-        <button onclick="checkSolarServerHealth(true)" class="w-full py-3.5 bg-sky-500/20 border border-sky-400/40 text-sky-200 font-extrabold rounded-2xl text-xs uppercase">Atualizar Status Agora</button>
-    </div>
-
-    <!-- MODAL DETALHES FATURA SOLAR -->
-    <div class="modal-overlay" id="solar-modal-overlay" onclick="closeSolarInvoiceModal()"></div>
-    <div class="bottom-sheet" id="solar-bottom-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-start mb-4 gap-3">
-            <div>
-                <h3 id="solar-modal-cliente-nome" class="text-2xl font-extrabold capitalize text-white">Cliente</h3>
-                <p id="solar-modal-mes-sub" class="text-xs text-slate-400 mt-0.5">Fatura</p>
-                <p id="solar-modal-vencimento" class="text-xs font-semibold text-sky-300 mt-1">Vencimento: --</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span id="solar-modal-status" class="text-[10px] font-extrabold px-3 py-1 rounded-full uppercase">STATUS</span>
-                <button onclick="closeSolarInvoiceModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        </div>
-        <div id="solar-modal-body" class="space-y-3 mb-4 text-xs">
-            <div class="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-2">
-                <div class="flex justify-between"><span>Consumo Medido:</span><strong id="solar-m-kwh">0 kWh</strong></div>
-                <div class="flex justify-between"><span>Valor Energia (R$ 0,81/kWh):</span><strong id="solar-m-ckwh">R$ 0,00</strong></div>
-                <div class="flex justify-between"><span>Iluminação Pública (CIP):</span><strong id="solar-m-cip">R$ 0,00</strong></div>
-                <div class="flex justify-between text-slate-400 border-t border-white/10 pt-2"><span>Sem Desconto:</span><span id="solar-m-bruto" class="line-through text-red-400">R$ 0,00</span></div>
-                <div class="flex justify-between text-emerald-400"><span>Desconto (20% OFF):</span><strong id="solar-m-desc">- R$ 0,00</strong></div>
-                <div class="flex justify-between text-sm font-extrabold border-t border-white/15 pt-2"><span>Valor a Pagar:</span><span id="solar-m-fat" class="text-amber-300">R$ 0,00</span></div>
-            </div>
-            <div class="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-2">
-                <div class="flex justify-between"><span>Custo Geração Usina:</span><strong id="solar-m-cusina" class="text-red-400">- R$ 0,00</strong></div>
-                <div class="flex justify-between font-bold border-t border-white/10 pt-2"><span>Custo Total Usina:</span><span id="solar-m-ctotal" class="text-red-400">- R$ 0,00</span></div>
-            </div>
-        </div>
-        <div class="bg-emerald-500/15 border border-emerald-400/40 rounded-2xl p-4 text-center mb-4">
-            <span class="text-[11px] text-emerald-400 font-bold uppercase block">Seu Lucro Líquido Final</span>
-            <span id="solar-m-lucro" class="tabular-nums text-3xl font-black text-solar-neon">R$ 0,00</span>
-        </div>
-        <div id="solar-m-actions" class="grid grid-cols-1 gap-2">
-            <button id="solar-btn-wpp" class="w-full py-3.5 bg-[#25D366] text-slate-950 font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-base"></i><span>Enviar Fatura PNG + Mensagem</span></button>
-            <button id="solar-btn-dl" class="w-full py-3 bg-white/10 text-white font-bold rounded-2xl text-xs uppercase flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i><span>Apenas Baixar PNG</span></button>
-        </div>
-    </div>
-
-    <!-- MODAL NOVO CLIENTE FLOWNEST -->
-    <div class="modal-overlay" id="fn-new-overlay" onclick="closeFnNewClientModal()"></div>
-    <div class="bottom-sheet" id="fn-new-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-extrabold text-white">Cadastrar Cliente FlowNest (IA)</h3>
-            <button onclick="closeFnNewClientModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <form id="fn-new-form" onsubmit="submitFnNewClient(event)" class="space-y-3 text-xs">
-            <div class="grid grid-cols-2 gap-2.5">
-                <div><label class="block font-bold text-solar-neon uppercase mb-1">Nome / Login *</label><input type="text" id="fn-new-nome" required class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-white"></div>
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Empresa</label><input type="text" id="fn-new-empresa" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-white"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-2.5">
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Responsável</label><input type="text" id="fn-new-resp" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-white"></div>
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">WhatsApp</label><input type="tel" id="fn-new-tel" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-white"></div>
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Dia Venc.</label><input type="number" id="fn-new-dia" min="1" max="31" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2 text-white"></div>
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Valor (R$)</label><input type="number" id="fn-new-valor" step="0.01" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2 text-solar-neon font-bold"></div>
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Status</label><select id="fn-new-status" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-2 py-2 text-emerald-400 font-bold"><option value="ATIVO">ATIVO</option><option value="OFF">OFF</option></select></div>
-            </div>
-            <button type="submit" id="fn-btn-submit-new" class="w-full py-3.5 bg-solar-neon text-slate-950 font-black rounded-2xl uppercase">Cadastrar na Planilha</button>
-        </form>
-    </div>
-
-    <!-- MODAL EDITAR ASSINANTE FLOWNEST -->
-    <div class="modal-overlay" id="fn-edit-overlay" onclick="closeFnEditModal()"></div>
-    <div class="bottom-sheet" id="fn-edit-sheet">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h3 id="fn-edit-nome" class="text-2xl font-extrabold text-white">Assinante</h3>
-                <p id="fn-edit-empresa" class="text-xs text-slate-400">FlowNest(IA)</p>
-            </div>
-            <button onclick="closeFnEditModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-300"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="grid grid-cols-2 gap-2.5 mb-4">
-            <button id="fn-edit-btn-ativar" class="py-3 rounded-xl font-black text-xs uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/50">Ativar (ATIVO)</button>
-            <button id="fn-edit-btn-off" class="py-3 rounded-xl font-black text-xs uppercase bg-red-500/20 text-red-300 border border-red-500/50">Bloquear (OFF)</button>
-        </div>
-        <div class="bg-white/[0.04] border border-white/10 rounded-2xl p-4 space-y-3 mb-4 text-xs">
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Dia Vencimento</label><input type="number" id="fn-edit-dia" min="1" max="31" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-white font-bold"></div>
-                <div><label class="block font-bold text-slate-300 uppercase mb-1">Mensalidade (R$)</label><input type="number" id="fn-edit-valor" step="0.01" class="w-full bg-[#090f22] border border-white/20 rounded-xl px-3 py-2.5 text-solar-neon font-bold"></div>
-            </div>
-            <button id="fn-edit-btn-salvar" class="w-full py-3 bg-sky-500 text-slate-950 font-black rounded-xl uppercase">Salvar Alterações</button>
-        </div>
-        <div class="grid grid-cols-1 gap-2">
-            <button id="fn-edit-btn-wpp" class="w-full py-3.5 bg-[#25D366] text-slate-950 font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-base"></i><span>Enviar Cobrança PNG + Mensagem</span></button>
-            <button id="fn-edit-btn-dl" class="w-full py-3 bg-white/10 text-white font-bold rounded-2xl text-xs uppercase">Apenas Baixar PNG</button>
-            <button id="fn-edit-btn-remover" class="w-full py-3 bg-red-500/15 border border-red-500/40 text-red-400 font-extrabold rounded-2xl text-xs uppercase">Remover Assinante</button>
-        </div>
-    </div>
-
-    <!-- MODAIS DO MAPA 3D -->
-    <div class="modal-overlay" id="map-modal-overlay" onclick="closeMapModals()"></div>
-
-    <!-- Modal Senha Empresário Mapa -->
-    <div class="bottom-sheet" id="modalAuth">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-extrabold">Área Restrita (Empresário)</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <input type="password" id="adminPasswordInput" placeholder="Digite sua senha (1234)..." class="w-full bg-[#090f22] border border-white/15 rounded-xl px-4 py-3 text-base text-white mb-3">
-        <button id="btnCheckAuth" class="w-full py-3.5 bg-blue-600 text-white font-extrabold rounded-xl">Acessar Modo Empresário</button>
-    </div>
-
-    <!-- Modal Visitante Mapa -->
-    <div class="bottom-sheet" id="modalPublicView">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 id="pubTitle" class="text-lg font-extrabold">Detalhes do Ponto</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div class="bg-[#090f22] border border-white/10 rounded-2xl p-4 mb-3">
-            <div id="pubTypeLabel" class="text-xs font-extrabold text-slate-400 uppercase">INFORMAÇÃO</div>
-            <div id="pubName" class="text-xl font-extrabold text-white mt-1">-</div>
-            <div id="pubKwh" class="text-base font-bold text-amber-400 mt-2">-</div>
-        </div>
-        <button id="btnPubMaps" class="w-full py-3.5 bg-emerald-500 text-slate-950 font-extrabold rounded-xl flex items-center justify-center gap-2"><i data-lucide="navigation" class="w-4 h-4"></i> Abrir no Google Maps</button>
-    </div>
-
-    <!-- Modal Cadastro / Edição Ponto Mapa -->
-    <div class="bottom-sheet" id="modalForm">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 id="formTitle" class="text-lg font-extrabold">Novo Cadastro</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-
-        <div class="map-type-selector">
-            <div class="map-type-btn active" data-type="usina"><i data-lucide="sun" class="w-4 h-4"></i> Usina</div>
-            <div class="map-type-btn" data-type="cliente"><i data-lucide="zap" class="w-4 h-4"></i> Cliente Solar</div>
-            <div class="map-type-btn" data-type="aluguel"><i data-lucide="home" class="w-4 h-4"></i> Imóvel</div>
-            <div class="map-type-btn" data-type="software"><i data-lucide="cpu" class="w-4 h-4"></i> FlowNest (IA)</div>
-        </div>
-
-        <input type="hidden" id="pointId"><input type="hidden" id="pointLat"><input type="hidden" id="pointLng">
-
-        <div class="space-y-3 text-xs">
-            <div><label id="lblName" class="block font-bold text-slate-400 uppercase mb-1">Nome do Ponto</label><input type="text" id="pointName" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white"></div>
-
-            <div id="locationTypeGroup"><label class="block font-bold text-slate-400 uppercase mb-1">Localização</label>
-                <select id="pointLocationType" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white">
-                    <option value="urbana">Urbana (Iluminação Pública R$ 21,00)</option>
-                    <option value="rural">Rural (Isento Iluminação Pública)</option>
-                </select>
-            </div>
-
-            <div id="ownershipGroup"><label class="block font-bold text-slate-400 uppercase mb-1">Propriedade</label>
-                <select id="pointOwnership" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white">
-                    <option value="Proprio">100% Próprio</option>
-                    <option value="Sociedade">Sociedade (Com Sócio/Sogro)</option>
-                </select>
-            </div>
-
-            <div id="usinaSourceGroup" style="display:none;"><label class="block font-bold text-slate-400 uppercase mb-1">Usina Fornecedora</label>
-                <select id="pointSourceUsina" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white"></select>
-            </div>
-
-            <div id="financeCalcCard" style="display:none;" class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 space-y-1.5">
-                <div class="font-extrabold text-emerald-400 uppercase">📊 Demonstrativo Financeiro</div>
-                <div class="flex justify-between"><span>Faturamento Bruto:</span><strong id="calcBruto">R$ 0,00</strong></div>
-                <div class="flex justify-between"><span>Custo Produção (0,17/kWh):</span><strong id="calcCustoProd">R$ 0,00</strong></div>
-                <div class="flex justify-between"><span>Iluminação Pública:</span><strong id="calcIlum">R$ 0,00</strong></div>
-                <div class="flex justify-between text-sm font-extrabold text-solar-neon border-t border-white/10 pt-1.5"><span>Lucro Líquido:</span><strong id="calcLucro">R$ 0,00</strong></div>
-            </div>
-
-            <div class="flex gap-2.5">
-                <div id="kwhGroup" class="flex-1"><label id="lblKwh" class="block font-bold text-slate-400 uppercase mb-1">kWh / Mês</label><input type="number" id="pointKwh" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white"></div>
-                <div id="valGroup" class="flex-1"><label id="lblVal" class="block font-bold text-slate-400 uppercase mb-1">Valor / Desc.</label><input type="number" id="pointVal" value="20" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white"></div>
-            </div>
-
-            <div id="rentalStatusGroup" style="display:none;"><label id="lblStatus" class="block font-bold text-slate-400 uppercase mb-1">Status</label>
-                <select id="pointStatus" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-3 text-base text-white"></select>
-            </div>
-
-            <div><label class="block font-bold text-slate-400 uppercase mb-1">Observações</label><textarea id="pointNotes" rows="2" class="w-full bg-[#090f22] border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-white"></textarea></div>
-
-            <button id="btnSavePoint" class="w-full py-3.5 bg-blue-600 text-white font-extrabold rounded-xl text-sm">Salvar Localmente e na Planilha</button>
-            <button id="btnFormMaps" class="w-full py-3 bg-emerald-500 text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="navigation" class="w-4 h-4"></i> Abrir no Google Maps</button>
-            <button id="btnDeletePoint" style="display:none;" class="w-full py-3 bg-red-500/15 border border-red-500/30 text-red-400 font-bold rounded-xl text-sm">Excluir Ponto</button>
-        </div>
-    </div>
-
-    <!-- Modal Gestão Mapa -->
-    <div class="bottom-sheet" id="modalGestaoView">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 id="gestaoClientName" class="text-lg font-extrabold">Faturamento do Cliente</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 space-y-2 text-xs mb-4">
-            <div class="flex justify-between"><span>Consumo:</span><strong id="gConsumo">0 kWh</strong></div>
-            <div class="flex justify-between"><span>Usina:</span><strong id="gUsina">-</strong></div>
-            <div class="flex justify-between"><span>Localização:</span><strong id="gLocal">Urbana</strong></div>
-            <div class="flex justify-between border-t border-white/10 pt-2"><span>Faturamento Bruto:</span><strong id="gBruto" class="text-sky-400">R$ 0,00</strong></div>
-            <div class="flex justify-between"><span>Custo Produção:</span><strong id="gCustoProd" class="text-red-400">R$ 0,00</strong></div>
-            <div class="flex justify-between"><span>Iluminação Pública:</span><strong id="gIlum" class="text-red-400">R$ 0,00</strong></div>
-            <div class="flex justify-between text-base font-black text-solar-neon border-t border-white/10 pt-2"><span>LUCRO LÍQUIDO:</span><strong id="gLucro">R$ 0,00</strong></div>
-        </div>
-        <div class="space-y-2">
-            <button id="btnGestaoEditDirect" class="w-full py-3 bg-white/10 text-white font-bold rounded-xl text-xs uppercase">Editar Informações</button>
-            <button id="btnGestaoMaps" class="w-full py-3.5 bg-emerald-500 text-slate-950 font-extrabold rounded-xl text-xs uppercase flex items-center justify-center gap-2"><i data-lucide="navigation" class="w-4 h-4"></i> Abrir no Google Maps</button>
-        </div>
-    </div>
-
-    <!-- Modal Lista Separada por Usinas e Categorias -->
-    <div class="bottom-sheet" id="modalList">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-extrabold">Pontos Cadastrados</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div id="pointsContainer"></div>
-    </div>
-
-    <!-- Modal Resumo Consolidado Mapa -->
-    <div class="bottom-sheet" id="modalSummary">
-        <div class="modal-pill"></div>
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-extrabold">Balanço Geral (Mapa)</h3>
-            <button onclick="closeMapModals()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div id="summaryContent" class="text-xs"></div>
-    </div>
-
+    <!-- ========================================================= -->
+    <!-- LÓGICA COMPLETA: AGENDA, HORÁRIOS, CAIXA, IA, PWA, PUSH   -->
+    <!-- ========================================================= -->
     <script>
-        /* =====================================================================
-           CHAVES DE ARMAZENAMENTO UNIFICADAS (LOCALSTORAGE)
-           ===================================================================== */
-        const KEYS = {
-            SOLAR_SHEET_ID: 'solarinvest_sheet_id',
-            SOLAR_GITHUB_REPO: 'solarinvest_github_monitor_repo',
-            FN_APPSCRIPT_URL: 'flownest_appscript_url_v1',
-            KB_APPSCRIPT_URL: 'flownest_kb_appscript_url_v1',
-            FN_PORTAL_URL: 'flownest_portal_url_v1',
-            MAP_SHEET_URL: 'solar_sheet_url',
-            MAP_DB: 'solar_db',
-            MAP_QUEUE: 'solar_pending_queue',
-            MAP_VIEWPORT: 'solar_map_viewport',
-            PIX_CODE: 'unified_pix_code_v1',
-            PIX_MODE: 'unified_pix_mode_v1'
+        // ==========================================
+        // 1. ESTADO E STORAGE COMPATÍVEL COM O CLIENTE
+        // ==========================================
+        const DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+        const DEFAULT_SCHEDULE_CONFIG = {
+            workDays: [false, true, true, true, true, true, true], // Seg a Sáb ativo por padrão
+            openTime: '09:00',
+            closeTime: '19:00',
+            interval: 45,
+            lunchEnabled: true,
+            lunchStart: '12:00',
+            lunchEnd: '13:30',
+            activeSlots: ['09:00', '09:45', '10:30', '11:15', '13:30', '14:15', '15:00', '15:45', '16:30', '17:15', '18:00', '18:45'],
+            disabledSlots: []
         };
 
-        const DEFAULT_PIX = '00020126330014br.gov.bcb.pix0111709573141165204000053039865802BR5925Jose Elvecio Lopes Junior6009Sao Paulo62230519daqr2210911956886966304DDE3';
-        const DEFAULT_REPO = 'junim887876/Aposta';
-        const SOLAR_PORTAL_URL = 'https://junim887876.github.io/Energia/';
+        let bookings = [];
+        let scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG };
+        let manualTransactions = [];
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            document.getElementById('toast-text').innerText = msg;
-            toast.classList.add('show');
-            clearTimeout(window._toastTimer);
-            window._toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
-        }
+        // ============================================================
+        // COLE SUAS CREDENCIAIS DO ONESIGNAL AQUI DIRETO NO CÓDIGO:
+        // ============================================================
+        const ONESIGNAL_APP_ID = 'SEU_ONESIGNAL_APP_ID_AQUI';
+        const ONESIGNAL_REST_API_KEY = 'SUA_ONESIGNAL_REST_API_KEY_AQUI';
 
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+        let oneSignalConfig = {
+            appId: ONESIGNAL_APP_ID,
+            restApiKey: ONESIGNAL_REST_API_KEY,
+            playerId: ''
+        };
 
-        function openSheetModal(overlayId, sheetId) {
-            const overlay = document.getElementById(overlayId);
-            const sheet = document.getElementById(sheetId);
-            overlay.style.display = 'block';
-            requestAnimationFrame(() => {
-                overlay.style.opacity = '1';
-                sheet.style.transform = 'translate(-50%, 0)';
-            });
-        }
+        let currentStatusFilter = 'all';
+        let rejectingBookingId = null;
+        let deferredInstallPrompt = null;
+        let unseenNewBookings = 0;
 
-        function closeSheetModal(overlayId, sheetId) {
-            const overlay = document.getElementById(overlayId);
-            const sheet = document.getElementById(sheetId);
-            sheet.style.transform = 'translate(-50%, 100%)';
-            overlay.style.opacity = '0';
-            setTimeout(() => { overlay.style.display = 'none'; }, 300);
-        }
-
-        /* =====================================================================
-           NAVEGAÇÃO ENTRE AS 3 ABAS (SOLAR / FLOW-NEST / MAPA 3D)
-           ===================================================================== */
-        let activeMainTab = 'solar';
-        let mapInitialized = false;
-
-        function switchMainTab(tabName) {
-            activeMainTab = tabName;
-            document.querySelectorAll('.main-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tabName);
-            });
-
-            document.getElementById('view-solar').style.display = (tabName === 'solar') ? 'flex' : 'none';
-            document.getElementById('view-software').style.display = (tabName === 'software') ? 'flex' : 'none';
-            document.getElementById('view-mapa').style.display = (tabName === 'mapa') ? 'block' : 'none';
-
-            if (tabName === 'mapa' && map) {
-                setTimeout(() => {
-                    map.resize();
-                    renderMarkers();
-                }, 60);
+        // Carrega dados salvos no navegador
+        function loadAllStorageData() {
+            try {
+                const rawBookings = JSON.parse(localStorage.getItem('sb_bookings'));
+                bookings = Array.isArray(rawBookings) ? rawBookings.map(b => ({
+                    ...b,
+                    status: b.status || 'confirmed' // Garante compatibilidade com agendamentos vindos da tela do cliente
+                })) : [];
+            } catch (e) {
+                bookings = [];
             }
-        }
-
-        /* =====================================================================
-           MODAL CENTRALIZADO DA ENGRENAGEM (TODAS AS CONFIGURAÇÕES)
-           ===================================================================== */
-        function extractSheetId(input) {
-            if (!input) return '';
-            const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input.trim();
-        }
-
-        function openUnifiedConfigModal() {
-            document.getElementById('cfg-solar-sheet-id').value = localStorage.getItem(KEYS.SOLAR_SHEET_ID) || '';
-            document.getElementById('cfg-solar-github-repo').value = localStorage.getItem(KEYS.SOLAR_GITHUB_REPO) || DEFAULT_REPO;
-            document.getElementById('cfg-fn-appscript-url').value = localStorage.getItem(KEYS.FN_APPSCRIPT_URL) || '';
-            document.getElementById('cfg-kb-appscript-url').value = localStorage.getItem(KEYS.KB_APPSCRIPT_URL) || '';
-            document.getElementById('cfg-fn-portal-url').value = localStorage.getItem(KEYS.FN_PORTAL_URL) || '';
-            document.getElementById('cfg-map-sheet-url').value = localStorage.getItem(KEYS.MAP_SHEET_URL) || '';
-            document.getElementById('cfg-pix-code').value = localStorage.getItem(KEYS.PIX_CODE) || localStorage.getItem('solarinvest_pix_code_v2') || DEFAULT_PIX;
-            document.getElementById('cfg-pix-mode').value = localStorage.getItem(KEYS.PIX_MODE) || 'official_with_amount';
-
-            openSheetModal('unified-config-overlay', 'unified-config-sheet');
-        }
-
-        function closeUnifiedConfigModal() {
-            closeSheetModal('unified-config-overlay', 'unified-config-sheet');
-        }
-
-        function saveUnifiedConfig() {
-            const solarId = extractSheetId(document.getElementById('cfg-solar-sheet-id').value);
-            const repo = document.getElementById('cfg-solar-github-repo').value.trim();
-            const fnUrl = document.getElementById('cfg-fn-appscript-url').value.trim();
-            const kbUrl = document.getElementById('cfg-kb-appscript-url').value.trim();
-            const fnPortal = document.getElementById('cfg-fn-portal-url').value.trim();
-            const mapUrl = document.getElementById('cfg-map-sheet-url').value.trim();
-            const pixCode = document.getElementById('cfg-pix-code').value.trim() || DEFAULT_PIX;
-            const pixMode = document.getElementById('cfg-pix-mode').value;
-
-            if (solarId) localStorage.setItem(KEYS.SOLAR_SHEET_ID, solarId); else localStorage.removeItem(KEYS.SOLAR_SHEET_ID);
-            if (repo) localStorage.setItem(KEYS.SOLAR_GITHUB_REPO, repo);
-            if (fnUrl) localStorage.setItem(KEYS.FN_APPSCRIPT_URL, fnUrl); else localStorage.removeItem(KEYS.FN_APPSCRIPT_URL);
-            if (kbUrl) localStorage.setItem(KEYS.KB_APPSCRIPT_URL, kbUrl); else localStorage.removeItem(KEYS.KB_APPSCRIPT_URL);
-            if (fnPortal) localStorage.setItem(KEYS.FN_PORTAL_URL, fnPortal); else localStorage.removeItem(KEYS.FN_PORTAL_URL);
-            if (mapUrl) localStorage.setItem(KEYS.MAP_SHEET_URL, mapUrl); else localStorage.removeItem(KEYS.MAP_SHEET_URL);
-
-            localStorage.setItem(KEYS.PIX_CODE, pixCode);
-            localStorage.setItem(KEYS.PIX_MODE, pixMode);
-
-            scriptUrl = mapUrl;
-            closeUnifiedConfigModal();
-            showToast('Configurações salvas! Atualizando módulos...');
-
-            if (solarId) loadSolarAdminData();
-            checkSolarServerHealth(false);
-            if (fnUrl) loadFlowNestData(false);
-            syncKbEsteticaStatus();
-            if (mapUrl && navigator.onLine) syncMapFromSheet(true);
-        }
-
-        function clearUnifiedConfig() {
-            if (confirm('Deseja apagar todas as URLs e IDs de planilhas salvos neste navegador?')) {
-                Object.values(KEYS).forEach(k => {
-                    if (k !== KEYS.MAP_DB) localStorage.removeItem(k);
-                });
-                location.reload();
-            }
-        }
-
-        /* =====================================================================
-           GERADOR DE PIX & CRC16 COMPARTILHADO (SOLAR + FLOWNEST)
-           ===================================================================== */
-        function calculateCRC16(payloadWithoutCrc) {
-            let crc = 0xFFFF;
-            for (let i = 0; i < payloadWithoutCrc.length; i++) {
-                crc ^= payloadWithoutCrc.charCodeAt(i) << 8;
-                for (let j = 0; j < 8; j++) {
-                    crc = ((crc & 0x8000) !== 0) ? (((crc << 1) ^ 0x1021) & 0xFFFF) : ((crc << 1) & 0xFFFF);
-                }
-            }
-            return crc.toString(16).toUpperCase().padStart(4, '0');
-        }
-
-        function getFinalPixPayload(amount, forceExact = false) {
-            const basePix = (localStorage.getItem(KEYS.PIX_CODE) || DEFAULT_PIX).trim();
-            const mode = forceExact ? 'official_exact' : (localStorage.getItem(KEYS.PIX_MODE) || 'official_with_amount');
-            if (mode === 'official_exact' || !amount || amount <= 0) return basePix;
 
             try {
-                let idx = 0;
-                const tags = [];
-                while (idx < basePix.length - 4) {
-                    const id = basePix.substring(idx, idx + 2);
-                    const len = parseInt(basePix.substring(idx + 2, idx + 4), 10);
-                    if (isNaN(len)) return basePix;
-                    const val = basePix.substring(idx + 4, idx + 4 + len);
-                    if (id !== '63' && id !== '54') tags.push({ id, val });
-                    idx += 4 + len;
+                const savedSched = JSON.parse(localStorage.getItem('sb_schedule_config'));
+                if (savedSched && Array.isArray(savedSched.activeSlots)) {
+                    scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG, ...savedSched };
                 }
-                const amountStr = amount.toFixed(2);
-                let rebuilt = '';
-                let inserted = false;
-                for (const t of tags) {
-                    if (!inserted && parseInt(t.id, 10) > 54) {
-                        rebuilt += `54${String(amountStr.length).padStart(2, '0')}${amountStr}`;
-                        inserted = true;
-                    }
-                    rebuilt += `${t.id}${String(t.val.length).padStart(2, '0')}${t.val}`;
-                }
-                rebuilt += '6304';
-                return rebuilt + calculateCRC16(rebuilt);
             } catch (e) {
-                return basePix;
+                scheduleConfig = { ...DEFAULT_SCHEDULE_CONFIG };
             }
-        }
-
-        function roundRectPath(ctx, x, y, w, h, r) {
-            if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
-            ctx.beginPath();
-            ctx.moveTo(x + r.tl, y);
-            ctx.lineTo(x + w - r.tr, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r.tr);
-            ctx.lineTo(x + w, y + h - r.br);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
-            ctx.lineTo(x + r.bl, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r.bl);
-            ctx.lineTo(x, y + r.tl);
-            ctx.quadraticCurveTo(x, y, x + r.tl, y);
-            ctx.closePath();
-        }
-
-        function triggerBlobDownload(blob, fileName) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(url), 4000);
-        }
-
-        /* =====================================================================
-           MÓDULO 1: ENERGIA SOLAR (SOLAR INVEST)
-           ===================================================================== */
-        const TARIFA_KWH = 0.81;
-        const CUSTO_KWH_USINA = 0.176411;
-        const NATIVE_MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-        const HEADER_WORDS = ['cliente', 'clientkey', 'nome', 'usuario', 'usuário', 'user', 'cip', 'consumo', 'mês', 'mes', 'status', 'vencimento', 'dia'];
-        const AVATAR_COLORS = ['bg-blue-600 text-white', 'bg-violet-600 text-white', 'bg-teal-600 text-white', 'bg-amber-500 text-white', 'bg-emerald-600 text-white', 'bg-purple-600 text-white', 'bg-green-600 text-white', 'bg-orange-500 text-white'];
-
-        let globalSolarInvoices = [];
-        let globalSolarClients = [];
-        let globalSolarVencMap = {};
-        let globalSolarPassMap = {};
-        let currentSolarCards = [];
-
-        async function checkSolarServerHealth(manual = false) {
-            const repo = (localStorage.getItem(KEYS.SOLAR_GITHUB_REPO) || DEFAULT_REPO).trim();
-            const jsonUrl = `https://raw.githubusercontent.com/${repo}/main/status.json?t=${Date.now()}`;
-            const pill = document.getElementById('solar-server-pill');
-            const ping = document.getElementById('solar-led-ping');
-            const dot = document.getElementById('solar-led-dot');
-            const label = document.getElementById('solar-status-label');
-            const sub = document.getElementById('solar-status-sub');
-
-            if (manual) showToast('Verificando servidor PC...');
 
             try {
-                const res = await fetch(jsonUrl, { cache: 'no-store' });
-                if (!res.ok) throw new Error('Sem arquivo');
-                const data = await res.json();
-                const lastSignal = new Date(data.timestamp);
-                const diffMinutes = Math.max(0, Math.floor((new Date() - lastSignal) / 60000));
-                const isOnline = (diffMinutes <= 135) && (data.django_ok === true);
-
-                let elapsed = diffMinutes < 1 ? 'Agora' : (diffMinutes < 60 ? `há ${diffMinutes}m` : `há ${Math.floor(diffMinutes/60)}h`);
-                document.getElementById('srv-last-seen').innerText = data.hora_local_pc || lastSignal.toLocaleString('pt-BR');
-                document.getElementById('srv-elapsed').innerText = `${diffMinutes} min (${elapsed})`;
-                document.getElementById('srv-robo-activity').innerText = data.status_robo || 'Operando';
-                document.getElementById('srv-ucs-pending').innerText = data.ucs_pendentes !== undefined ? `${data.ucs_pendentes} UCs` : '--';
-
-                if (isOnline) {
-                    pill.className = 'server-pill-online rounded-2xl px-3.5 py-2 flex items-center gap-2.5 cursor-pointer';
-                    ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80';
-                    dot.className = 'relative inline-flex rounded-full h-3 w-3 led-glow-green';
-                    label.className = 'block text-[11px] font-extrabold uppercase text-solar-neon leading-none';
-                    label.innerText = 'SERVIDOR ONLINE';
-                    sub.innerText = `Sinal ${elapsed}`;
-                    document.getElementById('solar-modal-big-status').innerText = '● SERVIDOR ONLINE';
-                    document.getElementById('solar-modal-big-status').className = 'text-lg font-black uppercase text-solar-neon';
-                    document.getElementById('solar-modal-server-desc').innerText = 'Computador local e robô operando normalmente.';
-                } else {
-                    throw new Error('Offline');
-                }
+                const savedTx = JSON.parse(localStorage.getItem('sb_transactions'));
+                manualTransactions = Array.isArray(savedTx) ? savedTx : [];
             } catch (e) {
-                pill.className = 'server-pill-offline rounded-2xl px-3.5 py-2 flex items-center gap-2.5 cursor-pointer';
-                ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-85';
-                dot.className = 'relative inline-flex rounded-full h-3 w-3 led-glow-red';
-                label.className = 'block text-[11px] font-extrabold uppercase text-red-400 leading-none';
-                label.innerText = 'SERVIDOR OFFLINE';
-                sub.innerText = 'Sem sinal recente';
-                document.getElementById('solar-modal-big-status').innerText = '● SERVIDOR OFFLINE';
-                document.getElementById('solar-modal-big-status').className = 'text-lg font-black uppercase text-red-400';
-                document.getElementById('solar-modal-server-desc').innerText = 'Sem sinal recente do PC local.';
+                manualTransactions = [];
             }
+
+            try {
+                const savedPlayerId = localStorage.getItem('sb_onesignal_player_id');
+                if (savedPlayerId) oneSignalConfig.playerId = savedPlayerId;
+            } catch (e) {}
         }
 
-        function openSolarServerModal() { openSheetModal('solar-server-overlay', 'solar-server-sheet'); }
-        function closeSolarServerModal() { closeSheetModal('solar-server-overlay', 'solar-server-sheet'); }
-
-        function parseCSV(str) {
-            const arr = []; let quote = false; let row = [], col = '';
-            for (let c = 0; c < str.length; c++) {
-                let cc = str[c], nc = str[c+1];
-                if (cc === '\r') continue;
-                if (cc === '"' && quote && nc === '"') { col += cc; ++c; continue; }
-                if (cc === '"') { quote = !quote; continue; }
-                if (cc === ',' && !quote) { row.push(col.trim()); col = ''; continue; }
-                if (cc === '\n' && !quote) { if (col.trim() || row.length) { row.push(col.trim()); arr.push(row); } row = []; col = ''; continue; }
-                col += cc;
-            }
-            if (col || row.length) { row.push(col.trim()); arr.push(row); }
-            return arr;
+        function persistBookings() {
+            localStorage.setItem('sb_bookings', JSON.stringify(bookings));
         }
 
-        function safeParseFloat(val) {
-            if (!val) return 0;
-            if (typeof val === 'number') return val;
-            let str = val.toString().replace(/[R$\s]/g, '');
-            if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
-            else if (str.includes(',')) str = str.replace(',', '.');
-            let num = parseFloat(str); return isNaN(num) ? 0 : num;
+        function persistScheduleConfig() {
+            localStorage.setItem('sb_schedule_config', JSON.stringify(scheduleConfig));
+            // Também salva a lista simples de horários abertos para leitura direta pelo app do cliente
+            const openOnly = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
+            localStorage.setItem('sb_open_time_slots', JSON.stringify(openOnly));
         }
 
-        function getMonthIndex(mesStr) {
-            if (!mesStr) return -1;
-            const lower = mesStr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return NATIVE_MONTHS.map(m => m.normalize("NFD").replace(/[\u0300-\u036f]/g, "")).findIndex(m => lower.includes(m));
-        }
+        // ==========================================
+        // 2. INICIALIZAÇÃO DO APP E PWA
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllStorageData();
+            setupPWAManifestAndServiceWorker();
+            initOneSignalSDK();
 
-        function buildSolarDueInfo(dueDay, mesStr, isPaid, hasData) {
-            if (!dueDay) return { shortLabel: 'Vencimento: --', fullLabel: 'Não cadastrado', fullDateSlash: '--/--/----', whatsappDayLabel: 'A combinar', textClass: 'text-slate-400' };
-            const dayPadded = String(dueDay).padStart(2, '0');
-            const refMonthIdx = getMonthIndex(mesStr);
-            if (refMonthIdx === -1) return { shortLabel: `Vencimento: Dia ${dayPadded}`, fullLabel: `Todo dia ${dayPadded}`, fullDateSlash: `Dia ${dayPadded}`, whatsappDayLabel: `Dia ${dayPadded}`, textClass: 'text-slate-300' };
+            // Preenche inputs de configuração de horário
+            document.getElementById('cfg-open-time').value = scheduleConfig.openTime;
+            document.getElementById('cfg-close-time').value = scheduleConfig.closeTime;
+            document.getElementById('cfg-slot-interval').value = String(scheduleConfig.interval);
+            document.getElementById('cfg-lunch-enabled').checked = scheduleConfig.lunchEnabled;
+            document.getElementById('cfg-lunch-start').value = scheduleConfig.lunchStart;
+            document.getElementById('cfg-lunch-end').value = scheduleConfig.lunchEnd;
 
+            // Define mês atual no financeiro
             const now = new Date();
-            let targetYear = now.getFullYear();
-            let dueMonthIdx = dueDay <= 5 ? refMonthIdx + 1 : refMonthIdx;
-            if (dueMonthIdx > 11) { dueMonthIdx = 0; targetYear += 1; }
-            const monthPadded = String(dueMonthIdx + 1).padStart(2, '0');
-            const formattedDate = `${dayPadded}/${monthPadded}`;
-            const fullDateSlash = `${dayPadded}/${monthPadded}/${targetYear}`;
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('finance-month-picker').value = currentMonth;
 
-            return {
-                shortLabel: `Vencimento: ${formattedDate}`,
-                fullLabel: `Vencimento: ${fullDateSlash}`,
-                fullDateSlash,
-                whatsappDayLabel: `Dia ${dayPadded}`,
-                textClass: isPaid ? 'text-emerald-400' : 'text-sky-300'
-            };
-        }
+            renderWorkDaysSelector();
+            renderOwnerSlotsGrid();
+            renderOwnerBookings();
+            renderFinanceDashboard();
+            runLocalMovementAI();
 
-        async function fetchGoogleSheetCSV(sheetName) {
-            const SHEET_ID = localStorage.getItem(KEYS.SOLAR_SHEET_ID);
-            if (!SHEET_ID) throw new Error('NO_SHEET_ID');
-            const urls = [
-                `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`,
-                `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`
-            ];
-            for (const url of urls) {
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (!text.trim().startsWith('<!DOCTYPE')) return parseCSV(text);
-                    }
-                } catch (e) {}
+            if (window.lucide) lucide.createIcons();
+        });
+
+        // Escuta em tempo real se o cliente marcou horário em outra aba/janela no mesmo dispositivo
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'sb_bookings' && event.newValue) {
+                const previousIds = new Set(bookings.map(b => b.id));
+                loadAllStorageData();
+                const newlyAdded = bookings.filter(b => !previousIds.has(b.id));
+
+                if (newlyAdded.length > 0) {
+                    const latest = newlyAdded[0];
+                    handleIncomingClientAlert(latest);
+                }
+                renderOwnerBookings();
+                renderFinanceDashboard();
+                runLocalMovementAI();
             }
-            throw new Error('Planilha inacessível');
+        });
+
+        // ==========================================
+        // 3. CONFIGURAÇÃO PWA (MANIFEST + SERVICE WORKER)
+        // ==========================================
+        function setupPWAManifestAndServiceWorker() {
+            try {
+                const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#09090B"/><circle cx="256" cy="256" r="180" fill="#FBBF24" fill-opacity="0.15"/><path d="M170 160 L342 352 M342 160 L170 352" stroke="#FBBF24" stroke-width="36" stroke-linecap="round"/><circle cx="170" cy="160" r="34" fill="none" stroke="#FBBF24" stroke-width="24"/><circle cx="342" cy="160" r="34" fill="none" stroke="#FBBF24" stroke-width="24"/></svg>`;
+                const iconDataUrl = 'data:image/svg+xml;base64,' + btoa(svgIcon);
+
+                const manifestObj = {
+                    name: 'Secreta Barber - Proprietário',
+                    short_name: 'Secreta Admin',
+                    description: 'Painel do Proprietário: Agenda, Horários, Contabilidade e IA de Movimento.',
+                    start_url: window.location.href,
+                    display: 'standalone',
+                    orientation: 'portrait',
+                    background_color: '#09090B',
+                    theme_color: '#09090B',
+                    icons: [
+                        { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+                        { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+                    ]
+                };
+
+                const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+                const manifestUrl = URL.createObjectURL(manifestBlob);
+                document.getElementById('pwa-manifest-link').setAttribute('href', manifestUrl);
+
+                // Registra Service Worker leve via Blob se suportado
+                if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+                    const swCode = `
+                        self.addEventListener('install', (e) => self.skipWaiting());
+                        self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+                        self.addEventListener('fetch', (e) => {
+                            e.respondWith(fetch(e.request).catch(() => new Response('Modo Offline Ativo - Secreta Barber')));
+                        });
+                    `;
+                    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+                }
+            } catch (e) {}
+
+            // Captura prompt de instalação nativa no Android/Chrome
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+                document.getElementById('btn-install-pwa').classList.remove('hidden');
+            });
         }
+
+        async function triggerPwaInstall() {
+            if (!deferredInstallPrompt) {
+                showToastBanner('Instalar no Celular', 'Abra o menu do navegador e toque em "Adicionar à tela inicial".');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === 'accepted') {
+                document.getElementById('btn-install-pwa').classList.add('hidden');
+            }
+            deferredInstallPrompt = null;
+        }
+
+        // ==========================================
+        // 4. INTEGRAÇÃO ONESIGNAL PUSH NOTIFICATIONS
+        // ==========================================
+        function hasValidOneSignalCredentials() {
+            return oneSignalConfig.appId &&
+                oneSignalConfig.appId !== 'SEU_ONESIGNAL_APP_ID_AQUI' &&
+                oneSignalConfig.appId.length > 10;
+        }
+
+        function initOneSignalSDK() {
+            const statusDot = document.getElementById('onesignal-header-dot');
+            const statusText = document.getElementById('onesignal-header-status');
+            const btnPush = document.getElementById('btn-enable-push');
+
+            if (!hasValidOneSignalCredentials()) {
+                statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0';
+                statusText.textContent = 'Push OneSignal: Insira App ID no código';
+                return;
+            }
+
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                try {
+                    await OneSignal.init({
+                        appId: oneSignalConfig.appId,
+                        allowLocalhostAsSecureOrigin: true,
+                        notifyButton: { enable: false }
+                    });
+
+                    const isOptedIn = OneSignal.User.PushSubscription.optedIn;
+                    const subId = OneSignal.User.PushSubscription.id;
+
+                    if (subId) {
+                        oneSignalConfig.playerId = subId;
+                        localStorage.setItem('sb_onesignal_player_id', subId);
+                    }
+
+                    if (isOptedIn) {
+                        statusDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0';
+                        statusText.textContent = 'Push OneSignal: Conectado';
+                        if (btnPush) btnPush.classList.add('hidden');
+                    } else {
+                        statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0';
+                        statusText.textContent = 'Push OneSignal: Toque em Ativar Push';
+                    }
+                } catch (err) {
+                    statusDot.className = 'w-1.5 h-1.5 rounded-full bg-red-500 inline-block shrink-0';
+                    statusText.textContent = 'Push OneSignal: Erro no App ID';
+                }
+            });
+        }
+
+        async function requestOneSignalPermission() {
+            if (!hasValidOneSignalCredentials()) {
+                if ('Notification' in window) {
+                    const perm = await Notification.requestPermission();
+                    if (perm === 'granted') {
+                        showToastBanner('Permissão Local Concedida', 'Coloque seu ONESIGNAL_APP_ID no código para push externo.');
+                    }
+                }
+                return;
+            }
+
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.Notifications.requestPermission();
+                const subId = OneSignal.User.PushSubscription.id;
+                if (subId) {
+                    oneSignalConfig.playerId = subId;
+                    localStorage.setItem('sb_onesignal_player_id', subId);
+                }
+                initOneSignalSDK();
+                showToastBanner('OneSignal Ativado!', 'Você receberá notificações de novos agendamentos.');
+            });
+        }
+
+        // Dispara push real pela REST API do OneSignal quando um cliente marca horário
+        async function dispatchOneSignalPushNotification(booking) {
+            if (!hasValidOneSignalCredentials() || !oneSignalConfig.restApiKey || oneSignalConfig.restApiKey === 'SUA_ONESIGNAL_REST_API_KEY_AQUI') {
+                return false;
+            }
+
+            const payload = {
+                app_id: oneSignalConfig.appId,
+                headings: { en: 'Novo Agendamento - Secreta Barber', pt: 'Novo Agendamento - Secreta Barber' },
+                contents: {
+                    en: `${booking.clientName} marcou ${booking.serviceName} (${booking.dateDisplay} às ${booking.time})`,
+                    pt: `${booking.clientName} marcou ${booking.serviceName} (${booking.dateDisplay} às ${booking.time})`
+                },
+                chrome_web_badge: 'https://placehold.co/96x96/09090B/FBBF24?text=SB'
+            };
+
+            if (oneSignalConfig.playerId) {
+                payload.include_subscription_ids = [oneSignalConfig.playerId];
+            } else {
+                payload.included_segments = ['Subscribed Users'];
+            }
+
+            try {
+                const res = await fetch('https://onesignal.com/api/v1/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Authorization': `Basic ${oneSignalConfig.restApiKey}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                return res.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // ==========================================
+        // 5. NAVEGAÇÃO ENTRE ABAS DO PROPRIETÁRIO
+        // ==========================================
+        function switchOwnerTab(tabName) {
+            const tabs = ['agenda', 'horarios', 'contabilidade', 'ia'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                navBtn.className = 'flex flex-col items-center justify-center py-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 transition';
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = 'flex flex-col items-center justify-center py-1.5 rounded-xl text-amber-400 font-bold transition';
+
+            if (tabName === 'agenda') {
+                unseenNewBookings = 0;
+                updateAgendaNavBadge();
+                renderOwnerBookings();
+            } else if (tabName === 'contabilidade') {
+                renderFinanceDashboard();
+            } else if (tabName === 'ia') {
+                runLocalMovementAI();
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function updateAgendaNavBadge() {
+            const badge = document.getElementById('nav-agenda-badge');
+            if (unseenNewBookings > 0) {
+                badge.textContent = unseenNewBookings;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 6. AGENDA DO PROPRIETÁRIO & REJEIÇÃO
+        // ==========================================
+        function setBookingStatusFilter(status) {
+            currentStatusFilter = status;
+            ['all', 'confirmed', 'completed', 'rejected'].forEach(st => {
+                const btn = document.getElementById(`filter-status-${st}`);
+                if (st === status) {
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shrink-0';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-obsidian-950 text-zinc-400 border border-zinc-800 shrink-0';
+                }
+            });
+            renderOwnerBookings();
+        }
+
+        function clearDateFilter() {
+            document.getElementById('agenda-date-filter').value = '';
+            renderOwnerBookings();
+        }
+
+        function parseBrazilianPrice(priceStr) {
+            if (typeof priceStr === 'number') return priceStr;
+            if (!priceStr) return 0;
+            const clean = String(priceStr).replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+            const val = parseFloat(clean);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function formatBRL(val) {
+            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function renderOwnerBookings() {
+            const container = document.getElementById('owner-bookings-container');
+            const dateFilter = document.getElementById('agenda-date-filter').value;
+            const todayIso = new Date().toISOString().split('T')[0];
+
+            // Atualiza cards do topo
+            const todayActive = bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected');
+            const todayRevenue = todayActive.reduce((acc, b) => acc + parseBrazilianPrice(b.servicePrice), 0);
+            document.getElementById('stat-today-count').textContent = todayActive.length;
+            document.getElementById('stat-today-revenue').textContent = formatBRL(todayRevenue);
+            document.getElementById('stat-closing-time').textContent = scheduleConfig.closeTime;
+
+            // Filtra lista
+            const filtered = bookings.filter(b => {
+                const matchDate = !dateFilter || b.dateIso === dateFilter;
+                const matchStatus = currentStatusFilter === 'all' || b.status === currentStatusFilter;
+                return matchDate && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-6 text-center space-y-2">
+                        <i data-lucide="calendar-off" class="w-8 h-8 text-zinc-600 mx-auto"></i>
+                        <p class="text-sm font-semibold text-zinc-300">Nenhum horário encontrado</p>
+                        <p class="text-xs text-zinc-500">Quando um cliente agendar, aparecerá aqui automaticamente.</p>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = filtered.map(b => {
+                const isRejected = b.status === 'rejected';
+                const isCompleted = b.status === 'completed';
+
+                let badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">Confirmado</span>`;
+                if (isCompleted) {
+                    badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Concluído • Pago</span>`;
+                } else if (isRejected) {
+                    badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">Rejeitado</span>`;
+                }
+
+                return `
+                    <div class="bg-obsidian-900 border ${isRejected ? 'border-red-500/30 opacity-75' : isCompleted ? 'border-emerald-500/30' : 'border-zinc-800'} rounded-2xl p-4 space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded-lg ${isRejected ? 'bg-zinc-800 text-zinc-400 line-through' : 'bg-amber-500 text-black'} text-xs font-extrabold">${b.time}</span>
+                                <span class="text-xs font-semibold text-zinc-300">${b.dateDisplay}</span>
+                            </div>
+                            ${badgeHtml}
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-bold text-white">${b.clientName}</p>
+                                <span class="text-xs font-extrabold text-emerald-400">${b.servicePrice}</span>
+                            </div>
+                            <p class="text-xs text-zinc-300">${b.serviceName} • <span class="text-amber-400">Ref: ${b.cutStyle}</span></p>
+                            <p class="text-[11px] text-zinc-400">WhatsApp: ${b.clientPhone}</p>
+                            ${b.notes && b.notes !== 'Nenhuma' ? `<p class="text-[11px] text-zinc-400 italic bg-obsidian-950 p-2 rounded-lg border border-zinc-800/80">"${b.notes}"</p>` : ''}
+                            ${isRejected && b.rejectReason ? `<p class="text-[11px] text-red-400">Motivo: ${b.rejectReason}</p>` : ''}
+                        </div>
+
+                        <!-- Ações do Proprietário -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80">
+                            <a href="https://wa.me/${b.clientPhone.replace(/\D/g, '')}" target="_blank" rel="noopener noreferrer"
+                                class="px-3 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 text-xs font-semibold flex items-center gap-1.5 transition">
+                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                <span>WhatsApp</span>
+                            </a>
+
+                            <div class="flex items-center gap-1.5">
+                                ${!isCompleted && !isRejected ? `
+                                    <button type="button" onclick="markBookingCompleted('${b.id}')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 transition">
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        <span>Concluir</span>
+                                    </button>
+                                ` : ''}
+
+                                ${!isRejected ? `
+                                    <button type="button" onclick="openRejectModal('${b.id}')" class="px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-xs font-bold flex items-center gap-1 transition">
+                                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                        <span>Rejeitar</span>
+                                    </button>
+                                ` : `
+                                    <button type="button" onclick="deleteBookingPermanent('${b.id}')" class="px-2.5 py-2 rounded-xl bg-obsidian-800 text-zinc-400 hover:text-red-400 text-xs transition" title="Excluir registro">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function markBookingCompleted(id) {
+            const idx = bookings.findIndex(b => b.id === id);
+            if (idx === -1) return;
+            bookings[idx].status = 'completed';
+            persistBookings();
+            renderOwnerBookings();
+            renderFinanceDashboard();
+            runLocalMovementAI();
+            showToastBanner('Atendimento Concluído!', `Valor de ${bookings[idx].servicePrice} somado ao faturamento.`);
+        }
+
+        function openRejectModal(id) {
+            const b = bookings.find(item => item.id === id);
+            if (!b) return;
+            rejectingBookingId = id;
+            document.getElementById('reject-client-info').innerHTML = `
+                <strong>${b.clientName}</strong> • ${b.dateDisplay} às <strong>${b.time}</strong><br>
+                Serviço: ${b.serviceName} (${b.servicePrice})
+            `;
+            const modal = document.getElementById('reject-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeRejectModal() {
+            rejectingBookingId = null;
+            const modal = document.getElementById('reject-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmRejectBooking(sendWhatsApp) {
+            if (!rejectingBookingId) return;
+            const idx = bookings.findIndex(b => b.id === rejectingBookingId);
+            if (idx === -1) return;
+
+            const selectReason = document.getElementById('reject-reason-select').value;
+            const customReason = document.getElementById('reject-custom-reason').value.trim();
+            const finalReason = (selectReason === 'custom' && customReason) ? customReason : (customReason || selectReason);
+
+            bookings[idx].status = 'rejected';
+            bookings[idx].rejectReason = finalReason;
+            const rejectedBooking = bookings[idx];
+
+            persistBookings();
+            closeRejectModal();
+            renderOwnerBookings();
+            renderFinanceDashboard();
+            runLocalMovementAI();
+
+            showToastBanner('Horário Rejeitado', `O horário das ${rejectedBooking.time} foi liberado na agenda.`);
+
+            if (sendWhatsApp) {
+                const cleanClientPhone = rejectedBooking.clientPhone.replace(/\D/g, '');
+                const fullPhone = cleanClientPhone.startsWith('55') ? cleanClientPhone : `55${cleanClientPhone}`;
+                const msg = `Olá *${rejectedBooking.clientName}*, aqui é da *Secreta Barber*. Infelizmente precisei cancelar/rejeitar seu horário do dia *${rejectedBooking.dateDisplay} às ${rejectedBooking.time}* (${rejectedBooking.serviceName}).%0A*Motivo:* ${encodeURIComponent(finalReason)}.%0ASe quiser, pode escolher outro horário disponível no nosso link!`;
+                window.open(`https://wa.me/${fullPhone}?text=${msg}`, '_blank', 'noopener,noreferrer');
+            }
+        }
+
+        function deleteBookingPermanent(id) {
+            bookings = bookings.filter(b => b.id !== id);
+            persistBookings();
+            renderOwnerBookings();
+            renderFinanceDashboard();
+        }
+
+        // ==========================================
+        // 7. GESTÃO DE HORÁRIOS DE TRABALHO
+        // ==========================================
+        function renderWorkDaysSelector() {
+            const container = document.getElementById('work-days-grid');
+            container.innerHTML = DAYS_LABELS.map((label, idx) => {
+                const active = scheduleConfig.workDays[idx];
+                return `
+                    <button type="button" onclick="toggleWorkDay(${idx})"
+                        class="py-2.5 rounded-xl border text-xs font-bold transition ${active ? 'bg-amber-500 border-amber-500 text-black' : 'bg-obsidian-950 border-zinc-800 text-zinc-500'}">
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function toggleWorkDay(dayIndex) {
+            scheduleConfig.workDays[dayIndex] = !scheduleConfig.workDays[dayIndex];
+            persistScheduleConfig();
+            renderWorkDaysSelector();
+        }
+
+        function timeToMinutes(hhmm) {
+            const [h, m] = hhmm.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function minutesToTime(totalMins) {
+            const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
+            const m = String(totalMins % 60).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function saveAndGenerateSchedule() {
+            const openTime = document.getElementById('cfg-open-time').value || '09:00';
+            const closeTime = document.getElementById('cfg-close-time').value || '19:00';
+            const interval = parseInt(document.getElementById('cfg-slot-interval').value, 10) || 45;
+            const lunchEnabled = document.getElementById('cfg-lunch-enabled').checked;
+            const lunchStart = document.getElementById('cfg-lunch-start').value || '12:00';
+            const lunchEnd = document.getElementById('cfg-lunch-end').value || '13:30';
+
+            const startMin = timeToMinutes(openTime);
+            const endMin = timeToMinutes(closeTime);
+            const lStartMin = timeToMinutes(lunchStart);
+            const lEndMin = timeToMinutes(lunchEnd);
+
+            if (endMin <= startMin) {
+                showToastBanner('Horário Inválido', 'O horário de fechamento deve ser maior que o de início.');
+                return;
+            }
+
+            const generated = [];
+            for (let cur = startMin; cur < endMin; cur += interval) {
+                if (lunchEnabled && cur >= lStartMin && cur < lEndMin) {
+                    continue;
+                }
+                generated.push(minutesToTime(cur));
+            }
+
+            scheduleConfig.openTime = openTime;
+            scheduleConfig.closeTime = closeTime;
+            scheduleConfig.interval = interval;
+            scheduleConfig.lunchEnabled = lunchEnabled;
+            scheduleConfig.lunchStart = lunchStart;
+            scheduleConfig.lunchEnd = lunchEnd;
+            scheduleConfig.activeSlots = generated;
+            scheduleConfig.disabledSlots = scheduleConfig.disabledSlots.filter(s => generated.includes(s));
+
+            persistScheduleConfig();
+            renderOwnerSlotsGrid();
+            renderOwnerBookings();
+            runLocalMovementAI();
+            showToastBanner('Expediente Atualizado!', `Atendimento configurado de ${openTime} até ${closeTime}.`);
+        }
+
+        function renderOwnerSlotsGrid() {
+            const grid = document.getElementById('owner-slots-toggle-grid');
+            const openCount = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s)).length;
+            document.getElementById('active-slots-badge').textContent = `${openCount} de ${scheduleConfig.activeSlots.length} abertos`;
+
+            grid.innerHTML = scheduleConfig.activeSlots.map(slot => {
+                const isDisabled = scheduleConfig.disabledSlots.includes(slot);
+                return `
+                    <button type="button" onclick="toggleSingleTimeSlot('${slot}')"
+                        class="py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition ${isDisabled ? 'bg-obsidian-950 border-zinc-800 text-zinc-500 line-through' : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'}">
+                        <span>${slot}</span>
+                        <i data-lucide="${isDisabled ? 'lock' : 'check'}" class="w-3 h-3"></i>
+                    </button>
+                `;
+            }).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function toggleSingleTimeSlot(slot) {
+            if (scheduleConfig.disabledSlots.includes(slot)) {
+                scheduleConfig.disabledSlots = scheduleConfig.disabledSlots.filter(s => s !== slot);
+            } else {
+                scheduleConfig.disabledSlots.push(slot);
+            }
+            persistScheduleConfig();
+            renderOwnerSlotsGrid();
+            runLocalMovementAI();
+        }
+
+        // ==========================================
+        // 8. CONTABILIDADE, FATURAMENTO MENSAL E LUCRO
+        // ==========================================
+        function renderFinanceDashboard() {
+            const selectedMonth = document.getElementById('finance-month-picker').value; // YYYY-MM
+
+            // Considera agendamentos do mês escolhido que não foram rejeitados
+            const monthBookings = bookings.filter(b =>
+                b.dateIso && b.dateIso.startsWith(selectedMonth) && b.status !== 'rejected'
+            );
+
+            const servicesRevenue = monthBookings.reduce((sum, b) => sum + parseBrazilianPrice(b.servicePrice), 0);
+
+            // Lançamentos manuais do mês
+            const monthTx = manualTransactions.filter(tx => tx.month === selectedMonth);
+            const extraIncome = monthTx.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
+            const totalExpenses = monthTx.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+
+            const grossRevenue = servicesRevenue + extraIncome;
+            const netProfit = grossRevenue - totalExpenses;
+            const profitMargin = grossRevenue > 0 ? Math.round((netProfit / grossRevenue) * 100) : 0;
+            const avgTicket = monthBookings.length > 0 ? (servicesRevenue / monthBookings.length) : 0;
+
+            document.getElementById('fin-gross-revenue').textContent = formatBRL(grossRevenue);
+            document.getElementById('fin-cuts-count-label').textContent = `${monthBookings.length} atendimento(s) no mês`;
+            document.getElementById('fin-total-expenses').textContent = formatBRL(totalExpenses);
+
+            const netEl = document.getElementById('fin-net-profit');
+            netEl.textContent = formatBRL(netProfit);
+            netEl.className = `text-xl font-extrabold mt-2 ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+            document.getElementById('fin-profit-margin').textContent = `${profitMargin}% margem`;
+            document.getElementById('fin-avg-ticket').textContent = `Ticket médio: ${formatBRL(avgTicket)}`;
+
+            // Quebra por serviço
+            const breakdownEl = document.getElementById('fin-services-breakdown');
+            const serviceMap = {};
+            monthBookings.forEach(b => {
+                const name = b.serviceName || 'Outros';
+                serviceMap[name] = (serviceMap[name] || 0) + parseBrazilianPrice(b.servicePrice);
+            });
+
+            const entries = Object.entries(serviceMap).sort((a, b) => b[1] - a[1]);
+            if (entries.length === 0) {
+                breakdownEl.innerHTML = `<p class="text-xs text-zinc-500">Nenhum atendimento registrado neste mês ainda.</p>`;
+            } else {
+                breakdownEl.innerHTML = entries.map(([srvName, total]) => {
+                    const pct = servicesRevenue > 0 ? Math.round((total / servicesRevenue) * 100) : 0;
+                    return `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-zinc-200 font-medium truncate">${srvName}</span>
+                                <span class="text-amber-400 font-bold shrink-0">${formatBRL(total)} (${pct}%)</span>
+                            </div>
+                            <div class="w-full h-2 bg-obsidian-950 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Lista de lançamentos manuais
+            const txListEl = document.getElementById('fin-transactions-list');
+            if (monthTx.length === 0) {
+                txListEl.innerHTML = `<p class="text-xs text-zinc-500 text-center py-2">Nenhuma despesa ou venda extra lançada neste mês.</p>`;
+            } else {
+                txListEl.innerHTML = monthTx.map(tx => `
+                    <div class="flex items-center justify-between gap-2 bg-obsidian-950 border border-zinc-800 px-3 py-2 rounded-xl text-xs">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-white truncate">${tx.desc}</p>
+                            <span class="text-[10px] text-zinc-500">${tx.date}</span>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'}">
+                                ${tx.type === 'income' ? '+' : '-'} ${formatBRL(tx.amount)}
+                            </span>
+                            <button type="button" onclick="deleteTransaction('${tx.id}')" class="text-zinc-500 hover:text-red-400">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function handleAddTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('tx-type').value;
+            const desc = document.getElementById('tx-desc').value.trim();
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const selectedMonth = document.getElementById('finance-month-picker').value;
+
+            if (!desc || isNaN(amount) || amount <= 0) return;
+
+            manualTransactions.unshift({
+                id: 'tx_' + Date.now(),
+                type,
+                desc,
+                amount,
+                month: selectedMonth,
+                date: new Date().toLocaleDateString('pt-BR')
+            });
+            localStorage.setItem('sb_transactions', JSON.stringify(manualTransactions));
+            e.target.reset();
+            renderFinanceDashboard();
+            showToastBanner('Lançamento Registrado', `${type === 'income' ? 'Receita' : 'Despesa'} de ${formatBRL(amount)} salva.`);
+        }
+
+        function deleteTransaction(id) {
+            manualTransactions = manualTransactions.filter(t => t.id !== id);
+            localStorage.setItem('sb_transactions', JSON.stringify(manualTransactions));
+            renderFinanceDashboard();
+        }
+
+        // ==========================================
+        // 9. IA LOCAL DE MOVIMENTO (MOTOR HEURÍSTICO)
+        // ==========================================
+        function runLocalMovementAI() {
+            const todayIso = new Date().toISOString().split('T')[0];
+            const openSlots = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
+            const totalCapacityToday = Math.max(openSlots.length, 1);
+
+            const validBookings = bookings.filter(b => b.status !== 'rejected');
+            const todayBookings = validBookings.filter(b => b.dateIso === todayIso);
+
+            // 1) Taxa de ocupação de hoje
+            const occupancyPct = Math.min(100, Math.round((todayBookings.length / totalCapacityToday) * 100));
+            const occBar = document.getElementById('ai-occupancy-bar');
+            const occBadge = document.getElementById('ai-occupancy-badge');
+            const occSummary = document.getElementById('ai-occupancy-summary');
+
+            occBar.style.width = `${occupancyPct}%`;
+
+            if (occupancyPct >= 75) {
+                occBar.className = 'h-full bg-emerald-500 transition-all duration-500';
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400';
+                occBadge.textContent = `Alta Demanda (${occupancyPct}%)`;
+                occSummary.textContent = `Hoje você tem ${todayBookings.length} de ${totalCapacityToday} horários ocupados. Movimento forte: considere estender o fechamento após às ${scheduleConfig.closeTime} se houver procura.`;
+            } else if (occupancyPct >= 35) {
+                occBar.className = 'h-full bg-amber-500 transition-all duration-500';
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400';
+                occBadge.textContent = `Movimento Moderado (${occupancyPct}%)`;
+                occSummary.textContent = `Você preencheu ${todayBookings.length} de ${totalCapacityToday} horários hoje. Ainda restam ${totalCapacityToday - todayBookings.length} vagas livres para encaixe rápido.`;
+            } else {
+                occBar.className = 'h-full bg-sky-500 transition-all duration-500';
+                occBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-sky-500/20 text-sky-400';
+                occBadge.textContent = `Movimento Calmo (${occupancyPct}%)`;
+                occSummary.textContent = `Apenas ${todayBookings.length} de ${totalCapacityToday} horários ocupados hoje. Ótimo momento para divulgar vagas livres nos status do WhatsApp.`;
+            }
+
+            // 2) Mapa de calor por horário (histórico acumulado + peso padrão de barbearia)
+            const slotCounts = {};
+            openSlots.forEach(s => slotCounts[s] = 0);
+            validBookings.forEach(b => {
+                if (slotCounts[b.time] !== undefined) {
+                    slotCounts[b.time] += 1;
+                }
+            });
+
+            const maxCount = Math.max(...Object.values(slotCounts), 1);
+            const heatmapEl = document.getElementById('ai-hourly-heatmap');
+
+            heatmapEl.innerHTML = openSlots.map(slot => {
+                const count = slotCounts[slot] || 0;
+                const hourNum = parseInt(slot.split(':')[0], 10);
+                // Peso base estatístico de barbearias (final da tarde tende a ter maior procura)
+                const naturalWeight = (hourNum >= 17 || hourNum === 10 || hourNum === 11) ? 1 : 0;
+                const score = count + naturalWeight;
+
+                let levelLabel = 'Calmo';
+                let cardStyle = 'bg-obsidian-950 border-zinc-800 text-zinc-400';
+                if (count >= 2 || (count === maxCount && count > 0) || score >= 2) {
+                    levelLabel = 'Pico';
+                    cardStyle = 'bg-amber-500/15 border-amber-500/50 text-amber-300';
+                } else if (score === 1) {
+                    levelLabel = 'Médio';
+                    cardStyle = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+                }
+
+                return `
+                    <div class="p-2.5 rounded-xl border ${cardStyle} text-center">
+                        <span class="block text-xs font-extrabold">${slot}</span>
+                        <span class="block text-[10px] uppercase mt-0.5 opacity-90">${levelLabel} (${count})</span>
+                    </div>
+                `;
+            }).join('');
+
+            // 3) Regras de Recomendações Inteligentes
+            const recommendations = [];
+
+            // Regra A: Horários ociosos hoje
+            const bookedTodaySet = new Set(todayBookings.map(b => b.time));
+            const freeToday = openSlots.filter(s => !bookedTodaySet.has(s));
+            if (freeToday.length > 0) {
+                const sampleFree = freeToday.slice(0, 3).join(', ');
+                recommendations.push({
+                    icon: 'sparkles',
+                    color: 'text-amber-400',
+                    title: 'Vagas Livres para Divulgação Imediata',
+                    desc: `Você tem ${freeToday.length} horários livres hoje (ex: ${sampleFree}). Poste nos Status do WhatsApp para preencher a agenda.`
+                });
+            }
+
+            // Regra B: Serviço carro-chefe
+            const srvFreq = {};
+            validBookings.forEach(b => srvFreq[b.serviceName] = (srvFreq[b.serviceName] || 0) + 1);
+            const topSrv = Object.entries(srvFreq).sort((a, b) => b[1] - a[1])[0];
+            if (topSrv) {
+                recommendations.push({
+                    icon: 'award',
+                    color: 'text-emerald-400',
+                    title: `Serviço Mais Pedido: ${topSrv[0]}`,
+                    desc: `Representa a maior procura da barbearia (${topSrv[1]} agendamentos). Mantenha insumos deste serviço sempre em estoque.`
+                });
+            }
+
+            // Regra C: Horário de maior pico
+            const peakEntry = Object.entries(slotCounts).sort((a, b) => b[1] - a[1])[0];
+            if (peakEntry && peakEntry[1] > 0) {
+                recommendations.push({
+                    icon: 'trending-up',
+                    color: 'text-amber-400',
+                    title: `Horário de Pico às ${peakEntry[0]}`,
+                    desc: `O horário das ${peakEntry[0]} é o mais disputado pelos clientes. Evite marcar pausas pessoais perto dessa faixa.`
+                });
+            } else {
+                recommendations.push({
+                    icon: 'info',
+                    color: 'text-sky-400',
+                    title: 'Aprendizado Contínuo Ativo',
+                    desc: 'A IA local ajusta automaticamente os horários de pico conforme novos clientes marcam horários na Secreta Barber.'
+                });
+            }
+
+            const recListEl = document.getElementById('ai-recommendations-list');
+            recListEl.innerHTML = recommendations.map(rec => `
+                <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3 flex items-start gap-2.5">
+                    <i data-lucide="${rec.icon}" class="w-4 h-4 ${rec.color} shrink-0 mt-0.5"></i>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-white">${rec.title}</p>
+                        <p class="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">${rec.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // ==========================================
+        // 10. ALERTAS SONOROS, SIMULAÇÃO E TOAST
+        // ==========================================
+        async function playOwnerChime() {
+            try {
+                if (typeof Tone !== 'undefined') {
+                    await Tone.start();
+                    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                    synth.volume.value = -5;
+                    const now = Tone.now();
+                    synth.triggerAttackRelease('C5', '16n', now);
+                    synth.triggerAttackRelease('E5', '16n', now + 0.12);
+                    synth.triggerAttackRelease('G5', '8n', now + 0.24);
+                }
+            } catch (e) {}
+        }
+
+        function handleIncomingClientAlert(booking) {
+            unseenNewBookings++;
+            updateAgendaNavBadge();
+            playOwnerChime();
+
+            if ('vibrate' in navigator) {
+                navigator.vibrate([250, 120, 250]);
+            }
+
+            showToastBanner(
+                `Novo Horário: ${booking.clientName} (${booking.time})`,
+                `${booking.serviceName} • ${booking.dateDisplay}`
+            );
+
+            // Dispara push via OneSignal se configurado
+            dispatchOneSignalPushNotification(booking);
+        }
+
+        function simulateNewClientBooking() {
+            const todayIso = new Date().toISOString().split('T')[0];
+            const openSlots = scheduleConfig.activeSlots.filter(s => !scheduleConfig.disabledSlots.includes(s));
+            const bookedToday = new Set(bookings.filter(b => b.dateIso === todayIso && b.status !== 'rejected').map(b => b.time));
+            const freeSlot = openSlots.find(s => !bookedToday.has(s)) || openSlots[0] || '16:30';
+
+            const demoNames = ['Gabriel Alves', 'Matheus Costa', 'Rafael Oliveira', 'Pedro Henrique'];
+            const randomName = demoNames[Math.floor(Math.random() * demoNames.length)];
+
+            const newBooking = {
+                id: 'bk_' + Date.now(),
+                clientName: randomName,
+                clientPhone: '(62) 99911-2233',
+                serviceName: 'Corte + Barba Completa',
+                servicePrice: 'R$ 55,00',
+                dateIso: todayIso,
+                dateDisplay: 'Hoje',
+                time: freeSlot,
+                cutStyle: 'Mid Fade Navalhado',
+                notes: 'Agendamento recebido pelo app do cliente',
+                status: 'confirmed',
+                createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            bookings.unshift(newBooking);
+            persistBookings();
+            handleIncomingClientAlert(newBooking);
+            renderOwnerBookings();
+            renderFinanceDashboard();
+            runLocalMovementAI();
+        }
+
+        function showToastBanner(title, desc) {
+            const banner = document.getElementById('owner-toast-banner');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-desc').textContent = desc;
+            banner.classList.remove('-translate-y-44', 'opacity-0');
+            banner.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(hideToastBanner, 5500);
+        }
+
+        function hideToastBanner() {
+            const banner = document.getElementById('owner-toast-banner');
+            banner.classList.add('-translate-y-44', 'opacity-0');
+            banner.classList.remove('translate-y-0', 'opacity-100');
+        }
+    </script>
+</body>
+</html>
