@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Secreta Barber | Painel do Proprietário (PWA)</title>
+    <title>Secreta Barber | Painel do Proprietário</title>
 
     <!-- ===================================================================== -->
-    <!-- CONFIGURAÇÃO INICIAL (COLE A URL DO SEU GOOGLE APPS SCRIPT ABAIXO)    -->
+    <!-- CONFIGURAÇÃO INICIAL (PREENCHA SUA URL DO APPS SCRIPT E REPOSITÓRIO)  -->
     <!-- ===================================================================== -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7wHmfBw_7MOP172wvp7eZY9DkhKkAkOZndB7L0QF2jFleY7dOEtbecMNmyxWtPioi/exec";
         const ONESIGNAL_APP_ID = "de473ebd-0f05-4d9e-8ba3-ba57e5066316";
+        // Se o site abre em https://usuario.github.io/secreta-barber/admin.html, coloque '/secreta-barber/'
+        // Se abre direto na raiz (https://usuario.github.io/admin.html), deixe '/'
+        const REPO_PATH = "/";
     </script>
 
     <!-- Meta Tags PWA para Android & iOS -->
@@ -18,12 +21,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Secreta Admin">
+    <meta name="apple-mobile-web-app-title" content="Secreta Barber">
     <meta name="description" content="Painel de Gestão, Agenda, Contabilidade e IA de Movimento - Secreta Barber">
 
-    <!-- Manifest & Apple Touch Icon dinâmicos -->
-    <link id="pwa-manifest-link" rel="manifest" href="">
-    <link id="apple-touch-icon-link" rel="apple-touch-icon" href="">
+    <!-- Manifest & Ícones Reais (Apontando direto para logo.jpg) -->
+    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="icon" type="image/jpeg" href="logo.jpg?v=3">
+    <link rel="apple-touch-icon" href="logo.jpg?v=3">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -121,9 +125,12 @@
     <!-- CABEÇALHO SUPERIOR FIXO -->
     <header class="sticky top-0 z-40 w-full bg-obsidian-950/95 backdrop-blur-md border-b border-zinc-800/80">
         <div class="w-full max-w-xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
-            <!-- Identidade Proprietário -->
-            <div class="flex items-center gap-2 min-w-0">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black font-extrabold shadow shrink-0">
+            <!-- Identidade Proprietário com logo.jpg -->
+            <div class="flex items-center gap-2.5 min-w-0">
+                <img src="logo.jpg?v=3" alt="Secreta Barber"
+                     onerror="this.style.display='none'; document.getElementById('logo-fallback-icon').classList.remove('hidden');"
+                     class="w-9 h-9 rounded-xl object-cover border border-amber-500/40 shadow shrink-0">
+                <div id="logo-fallback-icon" class="hidden w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black font-extrabold shadow shrink-0">
                     <i data-lucide="crown" class="w-4 h-4"></i>
                 </div>
                 <div class="min-w-0">
@@ -160,7 +167,7 @@
     <div id="missing-url-warning" class="hidden w-full max-w-xl mx-auto px-3 pt-3">
         <div class="bg-red-500/10 border border-red-500/40 rounded-2xl p-3 text-xs text-red-200 flex items-start gap-2">
             <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400 shrink-0 mt-0.5"></i>
-            <p class="break-words"><strong>Planilha desconectada:</strong> Cole a URL <code>/exec</code> do Google Apps Script na linha 8 do código HTML.</p>
+            <p class="break-words"><strong>Planilha desconectada:</strong> Cole a URL <code>/exec</code> do Google Apps Script na linha 11 do código HTML.</p>
         </div>
     </div>
 
@@ -214,9 +221,7 @@
             </div>
 
             <!-- Lista de Agendamentos -->
-            <div id="owner-bookings-container" class="space-y-3">
-                <!-- Renderizado via JS -->
-            </div>
+            <div id="owner-bookings-container" class="space-y-3"></div>
         </section>
 
         <!-- ========================================================= -->
@@ -237,9 +242,7 @@
                 <!-- Dias da Semana que Trabalha -->
                 <div class="space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400">Dias de Atendimento</label>
-                    <div id="work-days-grid" class="grid grid-cols-7 gap-1">
-                        <!-- Renderizado via JS -->
-                    </div>
+                    <div id="work-days-grid" class="grid grid-cols-7 gap-1"></div>
                 </div>
 
                 <!-- Início, Fim e Intervalo -->
@@ -320,9 +323,7 @@
                     <span id="active-slots-badge" class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold shrink-0">0 abertos</span>
                 </div>
 
-                <div id="owner-slots-toggle-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    <!-- Botões de cada horário renderizados via JS -->
-                </div>
+                <div id="owner-slots-toggle-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
             </div>
         </section>
 
@@ -331,7 +332,6 @@
         <!-- ========================================================= -->
         <section id="tab-contabilidade" class="hidden space-y-4 w-full">
 
-            <!-- Seletor do Mês -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Financeiro Secreta Barber</span>
@@ -341,7 +341,6 @@
                     class="px-3 py-2 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-amber-500">
             </div>
 
-            <!-- Cards Principais -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4">
                     <div class="flex items-center justify-between">
@@ -375,7 +374,6 @@
                 </div>
             </div>
 
-            <!-- Desempenho por Serviço -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i>
@@ -384,7 +382,6 @@
                 <div id="fin-services-breakdown" class="space-y-2.5"></div>
             </div>
 
-            <!-- Lançar Receita Extra ou Despesa -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i data-lucide="wallet" class="w-4 h-4 text-amber-400"></i>
@@ -429,7 +426,6 @@
                 <p class="text-xs text-zinc-400">Analisa horários marcados, horários de pico e vagas livres automaticamente.</p>
             </div>
 
-            <!-- Termômetro de Movimento Atual -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase text-zinc-400">Ocupação Hoje</span>
@@ -441,7 +437,6 @@
                 <p id="ai-occupancy-summary" class="text-xs text-zinc-300 leading-relaxed">Analisando agenda...</p>
             </div>
 
-            <!-- Mapa de Calor por Horário -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                     <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -453,7 +448,6 @@
                 <div id="ai-hourly-heatmap" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
             </div>
 
-            <!-- Recomendações -->
             <div class="bg-obsidian-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">
                     <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
@@ -464,7 +458,7 @@
         </section>
     </main>
 
-    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (ESTILO APP NATIVO MOBILE - 4 ABAS) -->
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-950/95 backdrop-blur-md border-t border-zinc-800/90 pb-[env(safe-area-inset-bottom)]">
         <div class="max-w-xl mx-auto grid grid-cols-4 px-1 py-1.5">
             <button type="button" onclick="switchOwnerTab('agenda')" id="nav-agenda" class="flex flex-col items-center justify-center py-1.5 rounded-xl text-amber-400 font-bold transition">
@@ -505,7 +499,7 @@
                 </button>
             </div>
             <p class="text-xs text-zinc-300 leading-relaxed">
-                Adicione o <strong>Secreta Admin</strong> à tela inicial do seu telefone para abrir em tela cheia como um aplicativo nativo:
+                Adicione o <strong>Secreta Barber</strong> à tela inicial do seu telefone para abrir em tela cheia com a sua logo:
             </p>
             <div class="space-y-2.5 text-xs">
                 <div class="bg-obsidian-950 border border-zinc-800 rounded-xl p-3">
@@ -606,7 +600,7 @@
         // 1. INICIALIZAÇÃO DO APP E PWA
         // ==========================================
         document.addEventListener('DOMContentLoaded', async () => {
-            setupPWAManifestAndIcons();
+            setupPwaInstallListener();
             initOneSignalSDK();
 
             const now = new Date();
@@ -623,7 +617,6 @@
                 setSyncBadge('error', 'Sem URL');
             } else {
                 await syncAllFromGoogleSheets(false);
-                // Verifica novos agendamentos na planilha a cada 15 segundos
                 setInterval(() => syncAllFromGoogleSheets(false), 15000);
             }
 
@@ -668,7 +661,6 @@
                 if (data.status === 'ok') {
                     const incomingBookings = Array.isArray(data.bookings) ? data.bookings : [];
 
-                    // Detecta novos agendamentos feitos por clientes para tocar alerta sonoro e vibrar
                     if (!isFirstSync) {
                         incomingBookings.forEach(b => {
                             if (!knownBookingIds.has(b.id) && b.status !== 'rejected') {
@@ -729,73 +721,9 @@
         }
 
         // ==========================================
-        // 3. PWA: ÍCONE PNG NATIVO + TELA INICIAL
+        // 3. PWA: INSTALAÇÃO NA TELA INICIAL (USA manifest.json REAL)
         // ==========================================
-        function generatePngIconDataUrl(size) {
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-
-            // Fundo escuro arredondado
-            ctx.fillStyle = '#09090B';
-            ctx.fillRect(0, 0, size, size);
-
-            // Borda dourada interna
-            ctx.strokeStyle = '#FBBF24';
-            ctx.lineWidth = Math.max(4, size * 0.04);
-            ctx.strokeRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
-
-            // Texto SB
-            ctx.fillStyle = '#FBBF24';
-            ctx.font = `800 ${Math.floor(size * 0.36)}px Inter, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('SB', size / 2, size / 2);
-
-            return canvas.toDataURL('image/png');
-        }
-
-        function setupPWAManifestAndIcons() {
-            try {
-                const icon192 = generatePngIconDataUrl(192);
-                const icon512 = generatePngIconDataUrl(512);
-
-                document.getElementById('apple-touch-icon-link').setAttribute('href', icon192);
-
-                const manifestObj = {
-                    name: 'Secreta Barber - Proprietário',
-                    short_name: 'Secreta Admin',
-                    description: 'Painel de Gestão da Secreta Barber',
-                    start_url: window.location.href.split('#')[0],
-                    display: 'standalone',
-                    orientation: 'portrait',
-                    background_color: '#09090B',
-                    theme_color: '#09090B',
-                    icons: [
-                        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-                    ]
-                };
-
-                const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-                document.getElementById('pwa-manifest-link').setAttribute('href', URL.createObjectURL(manifestBlob));
-
-                // Service Worker necessário para o Chrome liberar o banner nativo de instalação PWA
-                if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-                    const swCode = `
-                        self.addEventListener('install', (e) => self.skipWaiting());
-                        self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
-                        self.addEventListener('fetch', (e) => {
-                            e.respondWith(fetch(e.request).catch(() => new Response('Offline')));
-                        });
-                    `;
-                    const swBlob = new Blob([swCode], { type: 'application/javascript' });
-                    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-                }
-            } catch (e) {}
-
-            // Se já estiver rodando instalado na tela inicial (standalone), esconde o botão Instalar
+        function setupPwaInstallListener() {
             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
                 document.getElementById('btn-install-pwa').classList.add('hidden');
             }
@@ -817,7 +745,6 @@
                 deferredInstallPrompt = null;
                 return;
             }
-            // Abre guia visual para iPhone/Safari ou Chrome quando o prompt automático não disparou
             const modal = document.getElementById('pwa-install-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -830,7 +757,7 @@
         }
 
         // ==========================================
-        // 4. INTEGRAÇÃO ONESIGNAL PUSH NOTIFICATIONS
+        // 4. INTEGRAÇÃO ONESIGNAL PUSH NOTIFICATIONS (USA sw.js)
         // ==========================================
         function initOneSignalSDK() {
             const statusDot = document.getElementById('onesignal-header-dot');
@@ -842,7 +769,8 @@
                 try {
                     await OneSignal.init({
                         appId: ONESIGNAL_APP_ID,
-                        allowLocalhostAsSecureOrigin: true,
+                        serviceWorkerParam: { scope: REPO_PATH },
+                        serviceWorkerPath: `${REPO_PATH}sw.js`,
                         notifyButton: { enable: false }
                     });
 
@@ -1008,7 +936,6 @@
                             ${isRejected && b.rejectReason ? `<p class="text-[11px] text-red-400 break-words">Motivo: ${b.rejectReason}</p>` : ''}
                         </div>
 
-                        <!-- Ações do Proprietário -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80">
                             <a href="https://wa.me/${waClientNumber}" target="_blank" rel="noopener noreferrer"
                                 class="px-3 py-2 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-emerald-400 text-xs font-semibold flex items-center gap-1.5 transition">
@@ -1269,7 +1196,7 @@
             await postToGoogleSheets({
                 action: 'toggleTimeSlot',
                 time: slot,
-                isOpen: currentlyDisabled // Se estava bloqueado, agora abre (true)
+                isOpen: currentlyDisabled
             });
         }
 
